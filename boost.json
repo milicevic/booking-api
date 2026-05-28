@@ -1,0 +1,29 @@
+{
+    "agents": [
+        "claude_code"
+    ],
+    "cloud": false,
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch": false,
+    "sail": false,
+    "skills": [
+        "laravel-best-practices",
+        "blade-skill",
+        "fluxui-development",
+        "folio-routing",
+        "inertia-react-development",
+        "inertia-svelte-development",
+        "inertia-vue-development",
+        "laravel-specialist",
+        "livewire-development",
+        "mcp-development",
+        "pennant-development",
+        "pest-testing",
+        "tailwindcss-development",
+        "test-skill",
+        "volt-development",
+        "vue-syntax-skill",
+        "wayfinder-development"
+    ]
+}
