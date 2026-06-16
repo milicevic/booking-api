@@ -21,19 +21,17 @@ class BookingConfirmedCustomer extends Notification
     {
         $slot = $this->booking->slot;
         $worker = $slot->worker;
-        $manageUrl = route('booking.manage', $this->booking->token);
+        $t = 'notifications.booking_confirmed_customer';
 
         return (new MailMessage)
             ->theme('green')
-            ->subject('Rezervacija potvrđena ✓')
-            ->greeting('Zdravo, ' . $this->booking->customer_name . '!')
-            ->line('Vaša rezervacija je **potvrđena**. Vidimo se!')
-            ->panel(implode("\n", [
-                '**Radnik:** ' . $worker->name,
-                '**Datum:** ' . $slot->date->format('d.m.Y'),
-                '**Vreme:** ' . $slot->start_time . ' – ' . $slot->end_time,
-            ]))
-            ->action('Upravljaj rezervacijom', $manageUrl)
-            ->salutation('Hvala što koristite naš servis!');
+            ->subject(__("{$t}.subject"))
+            ->greeting(__("{$t}.greeting", ['name' => $this->booking->customer_name]))
+            ->line(__("{$t}.line"))
+            ->line(__("{$t}.worker", ['name' => $worker->name]))
+            ->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
+            ->line(__("{$t}.time", ['start' => $slot->start_time, 'end' => $slot->end_time]))
+            ->action(__("{$t}.action"), route('booking.manage', $this->booking->token))
+            ->salutation(__("{$t}.salutation"));
     }
 }

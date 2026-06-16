@@ -15,12 +15,17 @@ class SlotController extends Controller
         $request->validate([
             'date' => 'sometimes|date',
             'worker_id' => 'sometimes|exists:users,id',
+            'service_id' => 'sometimes|exists:services,id',
         ]);
 
         $slots = Slot::with('worker')
             ->where('is_available', true)
             ->when($request->date, fn ($q) => $q->whereDate('date', $request->date))
             ->when($request->worker_id, fn ($q) => $q->where('worker_id', $request->worker_id))
+            ->when($request->service_id, fn ($q) => $q->whereHas(
+                'worker.services',
+                fn ($s) => $s->where('services.id', $request->service_id)->where('services.is_active', true)
+            ))
             ->orderBy('date')
             ->orderBy('start_time')
             ->get();

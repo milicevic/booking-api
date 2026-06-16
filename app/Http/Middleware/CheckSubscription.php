@@ -17,7 +17,7 @@ class CheckSubscription
         $tenant = app('current_tenant');
 
         if (in_array($tenant->subscription_status, ['expired', 'canceled'])) {
-            return response()->json(['message' => 'Subscription is inactive.'], Response::HTTP_FORBIDDEN);
+            return response()->json(['message' => __('messages.subscription_expired')], Response::HTTP_FORBIDDEN);
         }
 
         return $next($request);

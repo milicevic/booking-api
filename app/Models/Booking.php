@@ -18,6 +18,7 @@ class Booking extends Model
     protected $fillable = [
         'tenant_id',
         'slot_id',
+        'service_id',
         'customer_name',
         'customer_email',
         'customer_phone',
@@ -41,6 +42,11 @@ class Booking extends Model
     public function slot(): BelongsTo
     {
         return $this->belongsTo(Slot::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
     }
 
     public function tenant(): BelongsTo

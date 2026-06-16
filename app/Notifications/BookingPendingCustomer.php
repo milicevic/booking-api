@@ -21,20 +21,18 @@ class BookingPendingCustomer extends Notification
     {
         $slot = $this->booking->slot;
         $worker = $slot->worker;
-        $manageUrl = route('booking.manage', $this->booking->token);
+        $t = 'notifications.booking_pending_customer';
 
         return (new MailMessage)
             ->theme('green')
-            ->subject('Zahtjev za rezervaciju primljen ⏳')
-            ->greeting('Zdravo, ' . $this->booking->customer_name . '!')
-            ->line('Vaš zahtjev za rezervaciju je uspješno primljen i čeka potvrdu.')
-            ->panel(implode("\n", [
-                '**Radnik:** ' . $worker->name,
-                '**Datum:** ' . $slot->date->format('d.m.Y'),
-                '**Vreme:** ' . $slot->start_time . ' – ' . $slot->end_time,
-            ]))
-            ->line('Bićete obaviješteni čim klijent potvrdi ili odbije vašu rezervaciju.')
-            ->action('Pogledaj rezervaciju', $manageUrl)
-            ->salutation('Hvala što koristite naš servis!');
+            ->subject(__("{$t}.subject"))
+            ->greeting(__("{$t}.greeting", ['name' => $this->booking->customer_name]))
+            ->line(__("{$t}.line1"))
+            ->line(__("{$t}.worker", ['name' => $worker->name]))
+            ->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
+            ->line(__("{$t}.time", ['start' => $slot->start_time, 'end' => $slot->end_time]))
+            ->line(__("{$t}.line2"))
+            ->action(__("{$t}.action"), route('booking.manage', $this->booking->token))
+            ->salutation(__("{$t}.salutation"));
     }
 }

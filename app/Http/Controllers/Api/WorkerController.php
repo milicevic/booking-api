@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\WorkerProfile;
+use App\Notifications\WorkerInvite;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class WorkerController extends Controller
 {
@@ -31,17 +33,25 @@ class WorkerController extends Controller
             'phone' => 'nullable|string',
         ]);
 
+        $inviteToken = $data['email'] ? Str::uuid()->toString() : null;
+
         $worker = User::create([
             'name' => $data['name'],
             'email' => $data['email'] ?? null,
             'role' => 'worker',
             'client_id' => $request->user()->id,
+            'invite_token' => $inviteToken,
         ]);
 
         WorkerProfile::create([
             'user_id' => $worker->id,
             'phone' => $data['phone'] ?? null,
         ]);
+
+        if ($inviteToken) {
+            $tenant = app('current_tenant');
+            $worker->notify(new WorkerInvite($tenant, $inviteToken));
+        }
 
         return response()->json($worker->load('workerProfile'), 201);
     }
@@ -59,7 +69,7 @@ class WorkerController extends Controller
 
         $data = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'email' => 'nullable|email|unique:users,email,' . $worker->id,
+            'email' => 'nullable|email|unique:users,email,'.$worker->id,
             'phone' => 'nullable|string',
             'can_edit_slots' => 'sometimes|boolean',
         ]);
@@ -90,7 +100,10 @@ class WorkerController extends Controller
 
     private function authorizeOwnership(User $client, User $worker): void
     {
-        if ($client->role === 'admin') return;
+        if ($client->role === 'admin') {
+            return;
+        }
+
         abort_if($worker->client_id !== $client->id, 403);
     }
 }

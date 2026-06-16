@@ -106,7 +106,7 @@ class LoginTest extends TestCase
 
         $response = $this->withToken($token)->postJson('/api/auth/logout');
 
-        $response->assertOk()->assertJsonPath('message', 'Odjavljen');
+        $response->assertOk()->assertJsonPath('message', __('messages.logged_out'));
     }
 
     public function test_token_is_deleted_from_database_after_logout(): void

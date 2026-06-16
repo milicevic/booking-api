@@ -21,18 +21,17 @@ class BookingCancelledCustomer extends Notification
     {
         $slot = $this->booking->slot;
         $worker = $slot->worker;
+        $t = 'notifications.booking_cancelled_customer';
 
         return (new MailMessage)
             ->theme('green')
-            ->subject('Rezervacija otkazana')
-            ->greeting('Zdravo, ' . $this->booking->customer_name . '!')
-            ->line('Vaša rezervacija je otkazana.')
-            ->panel(implode("\n", [
-                '**Radnik:** ' . $worker->name,
-                '**Datum:** ' . $slot->date->format('d.m.Y'),
-                '**Vreme:** ' . $slot->start_time . ' – ' . $slot->end_time,
-            ]))
-            ->line('Slobodni termini su i dalje dostupni — možete rezervisati novi.')
-            ->salutation('Booking App');
+            ->subject(__("{$t}.subject"))
+            ->greeting(__("{$t}.greeting", ['name' => $this->booking->customer_name]))
+            ->line(__("{$t}.line1"))
+            ->line(__("{$t}.worker", ['name' => $worker->name]))
+            ->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
+            ->line(__("{$t}.time", ['start' => $slot->start_time, 'end' => $slot->end_time]))
+            ->line(__("{$t}.line2"))
+            ->salutation(__("{$t}.salutation"));
     }
 }

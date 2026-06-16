@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Service;
 use App\Models\Slot;
+use App\Models\User;
 use App\Notifications\BookingConfirmedClient;
 use App\Notifications\BookingConfirmedCustomer;
 use App\Notifications\BookingPendingClient;
@@ -19,7 +21,7 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         if ($request->user()->role === 'admin' && $request->client_id) {
-            $workerIds = \App\Models\User::where('client_id', $request->client_id)->where('role', 'worker')->pluck('id');
+            $workerIds = User::where('client_id', $request->client_id)->where('role', 'worker')->pluck('id');
 
             $bookings = Booking::with('slot.worker')
                 ->whereHas('slot', fn ($q) => $q->whereIn('worker_id', $workerIds))
@@ -53,6 +55,7 @@ class BookingController extends Controller
     {
         $data = $request->validate([
             'slot_id' => 'required|exists:slots,id',
+            'service_id' => 'nullable|exists:services,id',
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'nullable|email',
             'customer_phone' => 'nullable|string',
@@ -62,7 +65,16 @@ class BookingController extends Controller
         $booking = DB::transaction(function () use ($data) {
             $slot = Slot::lockForUpdate()->findOrFail($data['slot_id']);
 
-            abort_if(! $slot->is_available, 409, 'Termin više nije dostupan');
+            abort_if(! $slot->is_available, 409, __('messages.slot_unavailable'));
+
+            if (! empty($data['service_id'])) {
+                $serviceForWorker = Service::where('id', $data['service_id'])
+                    ->where('is_active', true)
+                    ->whereHas('workers', fn ($q) => $q->where('users.id', $slot->worker_id))
+                    ->exists();
+
+                abort_if(! $serviceForWorker, 422, __('messages.service_unavailable_for_worker'));
+            }
 
             $slot->update(['is_available' => false]);
 
@@ -107,7 +119,7 @@ class BookingController extends Controller
     {
         $booking = Booking::with('slot')
             ->where('token', $token)
-            ->where('status', 'confirmed')
+            ->whereIn('status', ['pending', 'confirmed'])
             ->firstOrFail();
 
         DB::transaction(function () use ($booking) {
@@ -115,7 +127,7 @@ class BookingController extends Controller
             $booking->slot->update(['is_available' => true]);
         });
 
-        return response()->json(['message' => 'Rezervacija otkazana']);
+        return response()->json(['message' => __('messages.booking_cancelled')]);
     }
 
     /** Auth (klijent) — potvrđuje rezervaciju */
@@ -128,10 +140,10 @@ class BookingController extends Controller
         abort_if(
             $booking->slot->worker->client_id !== $request->user()->id,
             403,
-            'Nemate pristup ovoj rezervaciji'
+            __('messages.booking_not_accessible')
         );
 
-        abort_if($booking->status !== 'pending', 422, 'Rezervacija nije u statusu čekanja');
+        abort_if($booking->status !== 'pending', 422, __('messages.booking_not_pending'));
 
         $booking->update(['status' => 'confirmed']);
 
@@ -139,7 +151,7 @@ class BookingController extends Controller
             $booking->notify(new BookingConfirmedCustomer($booking));
         }
 
-        return response()->json(['message' => 'Rezervacija potvrđena']);
+        return response()->json(['message' => __('messages.booking_confirmed')]);
     }
 
     /** Auth (klijent) — odbija rezervaciju */
@@ -152,10 +164,10 @@ class BookingController extends Controller
         abort_if(
             $booking->slot->worker->client_id !== $request->user()->id,
             403,
-            'Nemate pristup ovoj rezervaciji'
+            __('messages.booking_not_accessible')
         );
 
-        abort_if($booking->status !== 'pending', 422, 'Rezervacija nije u statusu čekanja');
+        abort_if($booking->status !== 'pending', 422, __('messages.booking_not_pending'));
 
         DB::transaction(function () use ($booking) {
             $booking->update(['status' => 'rejected']);
@@ -166,22 +178,22 @@ class BookingController extends Controller
             $booking->notify(new BookingRejectedCustomer($booking));
         }
 
-        return response()->json(['message' => 'Rezervacija odbijena']);
+        return response()->json(['message' => __('messages.booking_rejected')]);
     }
 
     /** Javno — potvrda/odbijanje putem signed linka iz emaila */
     public function confirmByLink(Request $request, string $token)
     {
-        abort_if(! $request->hasValidSignature(), 403, 'Link je nevažeći ili je istekao');
+        abort_if(! $request->hasValidSignature(), 403, __('messages.invalid_link'));
 
         $action = $request->query('action');
-        abort_if(! in_array($action, ['confirm', 'reject']), 422, 'Neispravna akcija');
+        abort_if(! in_array($action, ['confirm', 'reject']), 422, __('messages.invalid_action'));
 
         $booking = Booking::with('slot')
             ->where('token', $token)
             ->firstOrFail();
 
-        abort_if($booking->status !== 'pending', 422, 'Rezervacija nije u statusu čekanja');
+        abort_if($booking->status !== 'pending', 422, __('messages.booking_not_pending'));
 
         if ($action === 'confirm') {
             $booking->update(['status' => 'confirmed']);
@@ -190,7 +202,7 @@ class BookingController extends Controller
                 $booking->notify(new BookingConfirmedCustomer($booking));
             }
 
-            return response()->json(['message' => 'Rezervacija potvrđena']);
+            return response()->json(['message' => __('messages.booking_confirmed')]);
         }
 
         DB::transaction(function () use ($booking) {
@@ -202,6 +214,6 @@ class BookingController extends Controller
             $booking->notify(new BookingRejectedCustomer($booking));
         }
 
-        return response()->json(['message' => 'Rezervacija odbijena']);
+        return response()->json(['message' => __('messages.booking_rejected')]);
     }
 }

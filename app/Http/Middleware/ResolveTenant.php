@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ResolveTenant
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string $mode = 'required'): Response
     {
         $host = $request->getHost();
 
@@ -20,11 +20,17 @@ class ResolveTenant
             $tenant = Tenant::where('subdomain', $subdomain)->first();
         }
 
-        if (! $tenant) {
-            return response()->json(['message' => 'Tenant not found.'], Response::HTTP_NOT_FOUND);
+        if (! $tenant && $request->hasHeader('X-Tenant-Subdomain')) {
+            $tenant = Tenant::where('subdomain', $request->header('X-Tenant-Subdomain'))->first();
         }
 
-        app()->instance('current_tenant', $tenant);
+        if (! $tenant && $mode === 'required') {
+            return response()->json(['message' => __('messages.tenant_not_found')], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($tenant) {
+            app()->instance('current_tenant', $tenant);
+        }
 
         return $next($request);
     }
