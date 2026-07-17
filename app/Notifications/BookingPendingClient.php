@@ -32,6 +32,7 @@ class BookingPendingClient extends Notification
             'booking_token' => $this->booking->token,
             'customer_name' => $this->booking->customer_name,
             'worker_name' => $slot->worker->name,
+            'service_name' => $this->booking->service?->name,
             'date' => $slot->date->format('Y-m-d'),
             'start_time' => $slot->start_time,
         ];
@@ -79,8 +80,13 @@ class BookingPendingClient extends Notification
             ->line(__("{$t}.line"))
             ->line(__("{$t}.customer", ['name' => $this->booking->customer_name]))
             ->line(__("{$t}.contact", ['contact' => $contact]))
-            ->line(__("{$t}.worker", ['name' => $worker->name]))
-            ->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
+            ->line(__("{$t}.worker", ['name' => $worker->name]));
+
+        if ($this->booking->service) {
+            $mail->line(__("{$t}.service", ['name' => $this->booking->service->name]));
+        }
+
+        $mail->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
             ->line(__("{$t}.time", ['start' => $slot->start_time, 'end' => $slot->end_time]));
 
         if ($this->booking->note) {

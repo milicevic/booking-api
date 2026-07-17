@@ -6,6 +6,7 @@ return [
         'greeting' => 'Zdravo, :name!',
         'line' => 'Vaša rezervacija je **potvrđena**. Vidimo se!',
         'worker' => '**Radnik:** :name',
+        'service' => '**Usluga:** :name',
         'date' => '**Datum:** :date',
         'time' => '**Vreme:** :start – :end',
         'action' => 'Upravljaj rezervacijom',
@@ -17,6 +18,7 @@ return [
         'greeting' => 'Zdravo, :name!',
         'line1' => 'Vaš zahtjev za rezervaciju je uspješno primljen i čeka potvrdu.',
         'worker' => '**Radnik:** :name',
+        'service' => '**Usluga:** :name',
         'date' => '**Datum:** :date',
         'time' => '**Vreme:** :start – :end',
         'line2' => 'Bićete obaviješteni čim klijent potvrdi ili odbije vašu rezervaciju.',
@@ -31,6 +33,7 @@ return [
         'customer' => '**Korisnik:** :name',
         'contact' => '**Kontakt:** :contact',
         'worker' => '**Radnik:** :name',
+        'service' => '**Usluga:** :name',
         'date' => '**Datum:** :date',
         'time' => '**Vreme:** :start – :end',
         'note' => '**Napomena:** :note',
@@ -46,6 +49,7 @@ return [
         'customer' => '**Korisnik:** :name',
         'contact' => '**Kontakt:** :contact',
         'worker' => '**Radnik:** :name',
+        'service' => '**Usluga:** :name',
         'date' => '**Datum:** :date',
         'time' => '**Vreme:** :start – :end',
         'note' => '**Napomena:** :note',
@@ -83,6 +87,16 @@ return [
         'time' => '**Vreme:** :start – :end',
         'line2' => 'Slobodni termini su i dalje dostupni — možete rezervisati novi.',
         'salutation' => 'Booking App',
+    ],
+
+    'booking_confirmed_customer_push' => [
+        'title' => 'Rezervacija potvrđena ✓',
+        'body' => 'Vaša rezervacija kod :worker dana :date u :start je potvrđena.',
+    ],
+
+    'booking_rejected_customer_push' => [
+        'title' => 'Rezervacija odbijena',
+        'body' => 'Vaša rezervacija kod :worker dana :date u :start je odbijena.',
     ],
 
     'booking_pending_client_push' => [

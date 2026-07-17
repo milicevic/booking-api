@@ -22,7 +22,7 @@ class ServiceController extends Controller
             $query->whereHas('workers', fn ($q) => $q->where('users.id', $request->worker_id));
         }
 
-        return response()->json($query->get());
+        return response()->json($query->with(['workers' => fn ($q) => $q->select('users.id', 'users.name')])->get());
     }
 
     public function store(Request $request): JsonResponse

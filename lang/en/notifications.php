@@ -6,6 +6,7 @@ return [
         'greeting' => 'Hello, :name!',
         'line' => 'Your booking has been **confirmed**. See you soon!',
         'worker' => '**Worker:** :name',
+        'service' => '**Service:** :name',
         'date' => '**Date:** :date',
         'time' => '**Time:** :start – :end',
         'action' => 'Manage booking',
@@ -17,6 +18,7 @@ return [
         'greeting' => 'Hello, :name!',
         'line1' => 'Your booking request has been received and is awaiting confirmation.',
         'worker' => '**Worker:** :name',
+        'service' => '**Service:** :name',
         'date' => '**Date:** :date',
         'time' => '**Time:** :start – :end',
         'line2' => 'You will be notified once the booking is confirmed or rejected.',
@@ -31,6 +33,7 @@ return [
         'customer' => '**Customer:** :name',
         'contact' => '**Contact:** :contact',
         'worker' => '**Worker:** :name',
+        'service' => '**Service:** :name',
         'date' => '**Date:** :date',
         'time' => '**Time:** :start – :end',
         'note' => '**Note:** :note',
@@ -46,6 +49,7 @@ return [
         'customer' => '**Customer:** :name',
         'contact' => '**Contact:** :contact',
         'worker' => '**Worker:** :name',
+        'service' => '**Service:** :name',
         'date' => '**Date:** :date',
         'time' => '**Time:** :start – :end',
         'note' => '**Note:** :note',
@@ -83,6 +87,16 @@ return [
         'time' => '**Time:** :start – :end',
         'line2' => 'Available slots are still open — feel free to book another.',
         'salutation' => 'Booking App',
+    ],
+
+    'booking_confirmed_customer_push' => [
+        'title' => 'Booking confirmed ✓',
+        'body' => 'Your booking with :worker on :date at :start has been confirmed.',
+    ],
+
+    'booking_rejected_customer_push' => [
+        'title' => 'Booking rejected',
+        'body' => 'Your booking with :worker on :date at :start has been rejected.',
     ],
 
     'booking_pending_client_push' => [

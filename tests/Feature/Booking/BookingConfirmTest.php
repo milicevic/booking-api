@@ -49,7 +49,7 @@ class BookingConfirmTest extends TestCase
         Notification::assertSentTo($booking, BookingConfirmedCustomer::class);
     }
 
-    public function test_no_notification_when_customer_has_no_email(): void
+    public function test_notification_sent_to_booking_even_without_email(): void
     {
         Notification::fake();
 
@@ -61,7 +61,8 @@ class BookingConfirmTest extends TestCase
         $this->actingAs($client)
             ->patchJson("/api/bookings/{$booking->token}/confirm");
 
-        Notification::assertNotSentTo($booking, BookingConfirmedCustomer::class);
+        // Notification is always sent; via() skips mail when no email, push when no subscription
+        Notification::assertSentTo($booking, BookingConfirmedCustomer::class);
     }
 
     public function test_returns_403_when_client_does_not_own_booking(): void

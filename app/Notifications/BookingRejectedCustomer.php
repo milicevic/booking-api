@@ -5,6 +5,8 @@ namespace App\Notifications;
 use App\Models\Booking;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 class BookingRejectedCustomer extends Notification
 {
@@ -14,7 +16,28 @@ class BookingRejectedCustomer extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        $channels = [WebPushChannel::class];
+        if ($notifiable->customer_email) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function toWebPush(object $notifiable, mixed $notification): WebPushMessage
+    {
+        $slot = $this->booking->slot;
+        $t = 'notifications.booking_rejected_customer_push';
+
+        return (new WebPushMessage)
+            ->title(__("{$t}.title"))
+            ->body(__("{$t}.body", [
+                'worker' => $slot->worker->name,
+                'date' => $slot->date->format('d.m.Y'),
+                'start' => $slot->start_time,
+            ]))
+            ->icon('/icon.png')
+            ->data(['url' => '/manage/'.$this->booking->token]);
     }
 
     public function toMail(object $notifiable): MailMessage

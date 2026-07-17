@@ -20,6 +20,7 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/push/vapid-public-key', [PushController::class, 'vapidPublicKey']);
 Route::get('/bookings/{token}/confirm-by-link', [BookingController::class, 'confirmByLink'])
     ->name('bookings.confirm-by-link');
+Route::post('/bookings/{token}/push-subscription', [BookingController::class, 'storePushSubscription']);
 
 // Admin rute — platform-level, ne vezane za tenant
 Route::middleware('auth:sanctum')->prefix('admin')->group(function () {

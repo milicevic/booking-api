@@ -99,7 +99,7 @@ class BookingStoreTest extends TestCase
         Notification::assertSentTo($client, BookingPendingClient::class);
     }
 
-    public function test_no_email_sent_to_customer_without_email_when_manual_confirm(): void
+    public function test_notification_sent_to_booking_without_email_when_manual_confirm(): void
     {
         Notification::fake();
 
@@ -113,7 +113,8 @@ class BookingStoreTest extends TestCase
         ]);
 
         $booking = Booking::where('slot_id', $slot->id)->firstOrFail();
-        Notification::assertNotSentTo($booking, BookingPendingCustomer::class);
+        // Notification is always sent; via() skips mail when no email, push when no subscription
+        Notification::assertSentTo($booking, BookingPendingCustomer::class);
         Notification::assertSentTo($client, BookingPendingClient::class);
     }
 

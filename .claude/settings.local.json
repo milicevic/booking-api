@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(docker compose exec app php artisan tinker --execute 'echo App\\\\Models\\\\User::count\\(\\) . \" users\\\\n\"; echo App\\\\Models\\\\User::where\\(\"role\",\"client\"\\)->count\\(\\) . \" clients\\\\n\"; echo App\\\\Models\\\\User::where\\(\"role\",\"worker\"\\)->count\\(\\) . \" workers\\\\n\"; echo App\\\\Models\\\\ClientProfile::count\\(\\) . \" client_profiles\\\\n\"; echo App\\\\Models\\\\WorkerProfile::count\\(\\) . \" worker_profiles\\\\n\"; echo App\\\\Models\\\\Slot::count\\(\\) . \" slots\\\\n\";')",
-      "mcp__laravel-boost__get-absolute-url"
+      "mcp__laravel-boost__get-absolute-url",
+      "Bash(docker compose exec app vendor/bin/pint --dirty --format agent 2>&1)",
+      "Bash(docker compose exec app php artisan test --compact --filter=Notification 2>&1)"
     ]
   },
   "enableAllProjectMcpServers": true,

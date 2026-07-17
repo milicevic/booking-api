@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */
-    use BelongsToTenant, HasFactory, Notifiable;
+    use BelongsToTenant, HasFactory, HasPushSubscriptions, Notifiable;
 
     protected $fillable = [
         'tenant_id',

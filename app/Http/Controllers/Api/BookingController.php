@@ -87,17 +87,10 @@ class BookingController extends Controller
 
         if ($autoConfirm) {
             $booking->update(['status' => 'confirmed']);
-
-            if ($booking->customer_email) {
-                $booking->notify(new BookingConfirmedCustomer($booking));
-            }
-
+            $booking->notify(new BookingConfirmedCustomer($booking));
             $client->notify(new BookingConfirmedClient($booking));
         } else {
-            if ($booking->customer_email) {
-                $booking->notify(new BookingPendingCustomer($booking));
-            }
-
+            $booking->notify(new BookingPendingCustomer($booking));
             $client->notify(new BookingPendingClient($booking));
         }
 
@@ -146,10 +139,7 @@ class BookingController extends Controller
         abort_if($booking->status !== 'pending', 422, __('messages.booking_not_pending'));
 
         $booking->update(['status' => 'confirmed']);
-
-        if ($booking->customer_email) {
-            $booking->notify(new BookingConfirmedCustomer($booking));
-        }
+        $booking->notify(new BookingConfirmedCustomer($booking));
 
         return response()->json(['message' => __('messages.booking_confirmed')]);
     }
@@ -174,9 +164,7 @@ class BookingController extends Controller
             $booking->slot->update(['is_available' => true]);
         });
 
-        if ($booking->customer_email) {
-            $booking->notify(new BookingRejectedCustomer($booking));
-        }
+        $booking->notify(new BookingRejectedCustomer($booking));
 
         return response()->json(['message' => __('messages.booking_rejected')]);
     }
@@ -197,10 +185,7 @@ class BookingController extends Controller
 
         if ($action === 'confirm') {
             $booking->update(['status' => 'confirmed']);
-
-            if ($booking->customer_email) {
-                $booking->notify(new BookingConfirmedCustomer($booking));
-            }
+            $booking->notify(new BookingConfirmedCustomer($booking));
 
             return response()->json(['message' => __('messages.booking_confirmed')]);
         }
@@ -210,10 +195,28 @@ class BookingController extends Controller
             $booking->slot->update(['is_available' => true]);
         });
 
-        if ($booking->customer_email) {
-            $booking->notify(new BookingRejectedCustomer($booking));
-        }
+        $booking->notify(new BookingRejectedCustomer($booking));
 
         return response()->json(['message' => __('messages.booking_rejected')]);
+    }
+
+    /** Javno — korisnik registruje push subscription za svoju rezervaciju */
+    public function storePushSubscription(Request $request, string $token)
+    {
+        $data = $request->validate([
+            'endpoint' => 'required|string',
+            'keys.auth' => 'required|string',
+            'keys.p256dh' => 'required|string',
+        ]);
+
+        $booking = Booking::where('token', $token)->firstOrFail();
+
+        $booking->updatePushSubscription(
+            $data['endpoint'],
+            $data['keys']['p256dh'],
+            $data['keys']['auth'],
+        );
+
+        return response()->json(['message' => __('messages.push_subscribed')], 201);
     }
 }

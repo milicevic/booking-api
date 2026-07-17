@@ -18,7 +18,7 @@ class SlotController extends Controller
             'service_id' => 'sometimes|exists:services,id',
         ]);
 
-        $slots = Slot::with('worker')
+        $slots = Slot::with(['worker', 'worker.services' => fn ($q) => $q->where('is_active', true)])
             ->where('is_available', true)
             ->when($request->date, fn ($q) => $q->whereDate('date', $request->date))
             ->when($request->worker_id, fn ($q) => $q->where('worker_id', $request->worker_id))
