@@ -62,6 +62,8 @@ Route::middleware(['resolve.tenant:optional', 'check.subscription', 'auth:sanctu
 
     Route::patch('/client/settings', [ClientController::class, 'updateSettings']);
     Route::post('/client/deploy-request', [ClientController::class, 'deployRequest']);
+    Route::patch('/client/branding', [TenantController::class, 'updateBranding']);
+    Route::post('/client/branding/logo', [TenantController::class, 'uploadLogo']);
 
     Route::get('/services', [ServiceController::class, 'index']);
     Route::post('/services', [ServiceController::class, 'store']);

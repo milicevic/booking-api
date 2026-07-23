@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TenantController extends Controller
 {
@@ -24,5 +26,35 @@ class TenantController extends Controller
             'subdomain' => $tenant->subdomain,
             'subscription_status' => $tenant->subscription_status,
         ]);
+    }
+
+    public function updateBranding(Request $request): JsonResponse
+    {
+        abort_if($request->user()->role !== 'client', 403);
+
+        $data = $request->validate([
+            'app_name' => 'sometimes|string|max:100',
+            'primary_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'secondary_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme' => 'sometimes|in:minimal,modern,classic',
+        ]);
+
+        $tenant = app('current_tenant');
+        $tenant->update($data);
+
+        return response()->json($tenant->only(['app_name', 'primary_color', 'secondary_color', 'theme', 'logo_url']));
+    }
+
+    public function uploadLogo(Request $request): JsonResponse
+    {
+        abort_if($request->user()->role !== 'client', 403);
+
+        $request->validate(['logo' => 'required|image|max:2048']);
+
+        $tenant = app('current_tenant');
+        $path = $request->file('logo')->store("logos/{$tenant->id}", 'public');
+        $tenant->update(['logo_url' => Storage::url($path)]);
+
+        return response()->json(['logo_url' => $tenant->logo_url]);
     }
 }
