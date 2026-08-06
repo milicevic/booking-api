@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('tenants', function (Blueprint $table) {
             $table->string('theme')->default('minimal')->after('app_name');
-            $table->enum('deploy_status', ['pending', 'pending_deploy', 'deployed'])->default('pending')->after('subscription_ends_at');
+            $table->string('deploy_status', 20)->default('pending')->after('subscription_ends_at');
         });
     }
 

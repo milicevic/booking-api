@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('customer_email')->nullable();
             $table->string('customer_phone')->nullable();
             $table->string('token', 64)->unique();
-            $table->enum('status', ['confirmed', 'cancelled'])->default('confirmed');
+            $table->string('status', 20)->default('confirmed');
             $table->text('note')->nullable();
             $table->timestamps();
         });

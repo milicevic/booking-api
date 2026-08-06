@@ -33,11 +33,13 @@ class TenantController extends Controller
         abort_if($request->user()->role !== 'client', 403);
 
         $data = $request->validate([
-            'app_name' => 'sometimes|string|max:100',
-            'primary_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'secondary_color' => ['sometimes', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'theme' => 'sometimes|in:minimal,modern,classic',
+            'app_name' => 'sometimes|nullable|string|max:100',
+            'primary_color' => ['sometimes', 'nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'secondary_color' => ['sometimes', 'nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'theme' => 'sometimes|nullable|in:minimal,modern,classic',
         ]);
+
+        $data = array_filter($data, fn ($value) => $value !== null);
 
         $tenant = app('current_tenant');
         $tenant->update($data);

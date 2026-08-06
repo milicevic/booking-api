@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('logo_url')->nullable();
             $table->string('app_name')->nullable();
             $table->timestamp('trial_ends_at')->nullable();
-            $table->enum('subscription_status', ['trialing', 'active', 'expired', 'canceled'])->default('trialing');
+            $table->string('subscription_status', 20)->default('trialing');
             $table->timestamp('subscription_ends_at')->nullable();
             $table->timestamps();
         });

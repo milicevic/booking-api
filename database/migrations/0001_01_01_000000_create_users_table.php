@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->nullable()->unique();
             $table->string('password')->nullable();
-            $table->enum('role', ['admin', 'client', 'worker'])->default('client');
+            $table->string('role', 20)->default('client');
             $table->foreignId('client_id')->nullable()->constrained('users')->nullOnDelete();
             $table->boolean('can_edit_slots')->default(false);
             $table->timestamps();

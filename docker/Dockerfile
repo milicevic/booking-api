@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     git \
-    && docker-php-ext-install pdo pdo_mysql gmp \
+    && apt-get install -y libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql pgsql gmp \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www
