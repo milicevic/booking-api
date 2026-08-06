@@ -16,9 +16,9 @@ class ServiceFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->randomElement(['Šišanje', 'Brijanje', 'Farbanje', 'Manikir', 'Masaža']),
-            'duration_minutes' => fake()->randomElement([30, 45, 60, 90]),
-            'price' => fake()->optional()->randomFloat(2, 5, 200),
+            'name' => $this->faker->randomElement(['Šišanje', 'Brijanje', 'Farbanje', 'Manikir', 'Masaža']),
+            'duration_minutes' => $this->faker->randomElement([30, 45, 60, 90]),
+            'price' => $this->faker->optional()->randomFloat(2, 5, 200),
             'is_active' => true,
         ];
     }

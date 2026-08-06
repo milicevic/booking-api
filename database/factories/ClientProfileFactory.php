@@ -18,8 +18,8 @@ class ClientProfileFactory extends Factory
     {
         return [
             'user_id' => User::factory()->client(),
-            'phone' => fake()->phoneNumber(),
-            'business_name' => fake()->company(),
+            'phone' => $this->faker->phoneNumber(),
+            'business_name' => $this->faker->company(),
         ];
     }
 }

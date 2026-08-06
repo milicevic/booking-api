@@ -18,7 +18,7 @@ class WorkerProfileFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'phone' => fake()->phoneNumber(),
+            'phone' => $this->faker->phoneNumber(),
         ];
     }
 }

@@ -114,7 +114,7 @@ class DatabaseSeeder extends Seeder
                         WorkerProfile::create([
                             'user_id' => $worker->id,
                             'tenant_id' => $tenant->id,
-                            'phone' => fake()->phoneNumber(),
+                            'phone' => \fake()->phoneNumber(),
                         ]);
 
                         $this->createSlotsForWorker($worker->id, $tenant->id);

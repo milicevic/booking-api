@@ -16,13 +16,13 @@ class TenantFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->company(),
-            'subdomain' => fake()->unique()->slug(2),
+            'name' => $this->faker->company(),
+            'subdomain' => $this->faker->unique()->slug(2),
             'custom_domain' => null,
-            'primary_color' => fake()->hexColor(),
-            'secondary_color' => fake()->hexColor(),
+            'primary_color' => $this->faker->hexColor(),
+            'secondary_color' => $this->faker->hexColor(),
             'logo_url' => null,
-            'app_name' => fake()->company(),
+            'app_name' => $this->faker->company(),
             'theme' => 'minimal',
             'trial_ends_at' => now()->addDays(7),
             'subscription_status' => 'trialing',

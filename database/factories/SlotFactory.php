@@ -17,8 +17,8 @@ class SlotFactory extends Factory
      */
     public function definition(): array
     {
-        $hour = fake()->numberBetween(8, 17);
-        $date = Carbon::today()->addDays(fake()->numberBetween(1, 30));
+        $hour = $this->faker->numberBetween(8, 17);
+        $date = Carbon::today()->addDays($this->faker->numberBetween(1, 30));
 
         return [
             'worker_id' => User::factory(),

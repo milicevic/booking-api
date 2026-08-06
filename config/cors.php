@@ -19,9 +19,14 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5173'],
+    'allowed_origins' => array_filter(
+        explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173'))
+    ),
 
-    'allowed_origins_patterns' => ['#^https?://[a-z0-9\-]+\.localhost(:\d+)?$#'],
+    'allowed_origins_patterns' => [
+        '#^https?://[a-z0-9\-]+\.localhost(:\d+)?$#',
+        '#^https://[a-z0-9\-]+\.vercel\.app$#',
+    ],
 
     'allowed_headers' => ['*'],
 

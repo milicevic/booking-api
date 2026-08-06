@@ -19,9 +19,9 @@ class BookingFactory extends Factory
     {
         return [
             'slot_id' => Slot::factory(),
-            'customer_name' => fake()->name(),
-            'customer_email' => fake()->safeEmail(),
-            'customer_phone' => fake()->phoneNumber(),
+            'customer_name' => $this->faker->name(),
+            'customer_email' => $this->faker->safeEmail(),
+            'customer_phone' => $this->faker->phoneNumber(),
             'token' => Str::random(64),
             'status' => 'pending',
             'note' => null,
