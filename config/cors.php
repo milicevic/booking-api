@@ -23,10 +23,14 @@ return [
         explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173'))
     ),
 
-    'allowed_origins_patterns' => [
-        '#^https?://[a-z0-9\-]+\.localhost(:\d+)?$#',
-        '#^https://[a-z0-9\-]+\.vercel\.app$#',
-    ],
+    'allowed_origins_patterns' => array_filter(array_merge(
+        [
+            '#^https?://[a-z0-9\-]+\.localhost(:\d+)?$#',
+            '#^https://[a-z0-9\-]+\.vercel\.app$#',
+            env('PLATFORM_HOST') ? '#^https://[a-z0-9\-]+\.'.preg_quote(env('PLATFORM_HOST'), '#').'$#' : null,
+        ],
+        explode(',', env('CORS_ALLOWED_PATTERNS', ''))
+    )),
 
     'allowed_headers' => ['*'],
 

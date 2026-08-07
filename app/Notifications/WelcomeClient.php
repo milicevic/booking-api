@@ -23,7 +23,10 @@ class WelcomeClient extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $loginUrl = "https://{$this->tenant->subdomain}.booking.app/login";
+        $baseUrl = $this->tenant->custom_domain
+            ? "https://{$this->tenant->custom_domain}"
+            : "https://{$this->tenant->subdomain}.".config('app.platform_host');
+        $loginUrl = "{$baseUrl}/admin/login";
         $trialEndsAt = $this->tenant->trial_ends_at?->format('d.m.Y') ?? '—';
         $t = 'notifications.welcome_client';
 

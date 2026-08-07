@@ -26,7 +26,10 @@ class WorkerInvite extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $acceptUrl = "https://{$this->tenant->subdomain}.booking.app/accept-invite?token={$this->inviteToken}";
+        $baseUrl = $this->tenant->custom_domain
+            ? "https://{$this->tenant->custom_domain}"
+            : "https://{$this->tenant->subdomain}.".config('app.platform_host');
+        $acceptUrl = "{$baseUrl}/invite/{$this->inviteToken}";
         $t = 'notifications.worker_invite';
 
         return (new MailMessage)

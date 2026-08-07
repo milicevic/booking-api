@@ -12,32 +12,20 @@ class ProductionSeeder extends Seeder
 {
     public function run(): void
     {
-        // --- Superadmin ---
-
-        User::withoutGlobalScopes()->updateOrCreate(
-            ['email' => 'superadmin@booking.app'],
-            [
-                'name' => 'Super Admin',
-                'role' => 'superadmin',
-                'tenant_id' => null,
-                'password' => Hash::make(env('SUPERADMIN_PASSWORD', 'changeme123')),
-            ]
-        );
-
         // --- Test klijenti ---
 
         $clients = [
             [
-                'name' => 'Marko Petrović',
-                'email' => 'marko@test.com',
-                'business_name' => 'Salon Petrović',
-                'subdomain' => 'salon-petrovic',
+                'name' => 'Admin A',
+                'email' => 'a@test.com',
+                'business_name' => 'Salon A',
+                'subdomain' => 'salon-a',
             ],
             [
-                'name' => 'Ana Jovanović',
-                'email' => 'ana@test.com',
-                'business_name' => 'Beauty by Ana',
-                'subdomain' => 'beauty-by-ana',
+                'name' => 'Admin B',
+                'email' => 'b@test.com',
+                'business_name' => 'Salon B',
+                'subdomain' => 'salon-b',
             ],
         ];
 
