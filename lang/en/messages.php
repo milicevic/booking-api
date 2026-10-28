@@ -13,6 +13,7 @@ return [
 
     // Booking
     'slot_unavailable' => 'This slot is no longer available.',
+    'service_required' => 'Please choose a service.',
     'service_unavailable_for_worker' => 'This service is not available for the selected worker.',
     'booking_not_pending' => 'Booking is not in pending status.',
     'booking_cancelled' => 'Booking cancelled.',
@@ -28,6 +29,16 @@ return [
     // Push notifications
     'push_subscribed' => 'Push notifications enabled.',
     'push_unsubscribed' => 'Push notifications disabled.',
+
+    // Not found (404)
+    'not_found' => [
+        'booking' => "This booking doesn't exist or is no longer active.",
+        'slot' => 'Time slot not found.',
+        'service' => 'Service not found.',
+        'user' => 'User not found.',
+        'tenant' => 'Business not found.',
+        'database_notification' => 'Notification not found.',
+    ],
 
     // Notifications
     'notification_read' => 'Notification marked as read.',

@@ -23,7 +23,7 @@ class BookingController extends Controller
         if ($request->user()->role === 'admin' && $request->client_id) {
             $workerIds = User::where('client_id', $request->client_id)->where('role', 'worker')->pluck('id');
 
-            $bookings = Booking::with('slot.worker')
+            $bookings = Booking::with(['slot.worker', 'service'])
                 ->whereHas('slot', fn ($q) => $q->whereIn('worker_id', $workerIds))
                 ->latest()
                 ->get();
@@ -32,7 +32,7 @@ class BookingController extends Controller
         }
 
         if ($request->user()->role === 'worker') {
-            $bookings = Booking::with('slot.worker')
+            $bookings = Booking::with(['slot.worker', 'service'])
                 ->whereHas('slot', fn ($q) => $q->where('worker_id', $request->user()->id))
                 ->latest()
                 ->get();
@@ -42,7 +42,7 @@ class BookingController extends Controller
 
         $workerIds = $request->user()->workers()->pluck('id');
 
-        $bookings = Booking::with('slot.worker')
+        $bookings = Booking::with(['slot.worker', 'service'])
             ->whereHas('slot', fn ($q) => $q->whereIn('worker_id', $workerIds))
             ->latest()
             ->get();
@@ -55,6 +55,7 @@ class BookingController extends Controller
     {
         $data = $request->validate([
             'slot_id' => 'required|exists:slots,id',
+            'start_time' => 'nullable|date_format:H:i',
             'service_id' => 'nullable|exists:services,id',
             'customer_name' => 'required|string|max:255',
             'customer_email' => 'nullable|email',
@@ -63,22 +64,44 @@ class BookingController extends Controller
         ]);
 
         $booking = DB::transaction(function () use ($data) {
-            $slot = Slot::lockForUpdate()->findOrFail($data['slot_id']);
+            $slot = Slot::findOrFail($data['slot_id']);
 
-            abort_if(! $slot->is_available, 409, __('messages.slot_unavailable'));
+            // Zaključavamo sve termine radnika tog dana, da dve istovremene rezervacije ne zauzmu isto vreme
+            Slot::where('worker_id', $slot->worker_id)->whereDate('date', $slot->date)->lockForUpdate()->get();
 
+            $workerHasServices = Service::where('is_active', true)
+                ->whereHas('workers', fn ($q) => $q->where('users.id', $slot->worker_id))
+                ->exists();
+
+            abort_if($workerHasServices && empty($data['service_id']), 422, __('messages.service_required'));
+
+            $service = null;
             if (! empty($data['service_id'])) {
-                $serviceForWorker = Service::where('id', $data['service_id'])
+                $service = Service::where('id', $data['service_id'])
                     ->where('is_active', true)
                     ->whereHas('workers', fn ($q) => $q->where('users.id', $slot->worker_id))
-                    ->exists();
+                    ->first();
 
-                abort_if(! $serviceForWorker, 422, __('messages.service_unavailable_for_worker'));
+                abort_if(! $service, 422, __('messages.service_unavailable_for_worker'));
             }
 
-            $slot->update(['is_available' => false]);
+            $startTime = isset($data['start_time']) ? "{$data['start_time']}:00" : $slot->start_time;
+            $time = collect(Slot::bookableTimes($slot->worker_id, $service?->duration_minutes, $slot->date->toDateString()))
+                ->first(fn (array $time) => $time['start_time'] === $startTime);
 
-            return Booking::create(array_merge($data, ['status' => 'pending']));
+            abort_if(! $time, 409, __('messages.slot_unavailable'));
+
+            $booking = Booking::create(array_merge($data, [
+                'slot_id' => $time['slot_id'],
+                'start_time' => $time['start_time'],
+                'end_time' => $time['end_time'],
+                'status' => 'pending',
+                'locale' => app()->getLocale(),
+            ]));
+
+            Slot::refreshAvailability($slot->worker_id, $slot->date->toDateString());
+
+            return $booking;
         });
 
         $booking->load('slot.worker.client.clientProfile');
@@ -94,13 +117,13 @@ class BookingController extends Controller
             $client->notify(new BookingPendingClient($booking));
         }
 
-        return response()->json($booking->load('slot.worker'), 201);
+        return response()->json($booking->load(['slot.worker', 'service']), 201);
     }
 
     /** Javno — korisnik vidi svoju rezervaciju via token */
     public function show(string $token)
     {
-        $booking = Booking::with('slot.worker')
+        $booking = Booking::with(['slot.worker', 'service'])
             ->where('token', $token)
             ->firstOrFail();
 
@@ -117,7 +140,7 @@ class BookingController extends Controller
 
         DB::transaction(function () use ($booking) {
             $booking->update(['status' => 'cancelled']);
-            $booking->slot->update(['is_available' => true]);
+            Slot::refreshAvailability($booking->slot->worker_id, $booking->slot->date->toDateString());
         });
 
         return response()->json(['message' => __('messages.booking_cancelled')]);
@@ -126,7 +149,7 @@ class BookingController extends Controller
     /** Auth (klijent) — potvrđuje rezervaciju */
     public function confirm(Request $request, string $token)
     {
-        $booking = Booking::with('slot.worker')
+        $booking = Booking::with(['slot.worker', 'service'])
             ->where('token', $token)
             ->firstOrFail();
 
@@ -161,7 +184,7 @@ class BookingController extends Controller
 
         DB::transaction(function () use ($booking) {
             $booking->update(['status' => 'rejected']);
-            $booking->slot->update(['is_available' => true]);
+            Slot::refreshAvailability($booking->slot->worker_id, $booking->slot->date->toDateString());
         });
 
         $booking->notify(new BookingRejectedCustomer($booking));
@@ -192,7 +215,7 @@ class BookingController extends Controller
 
         DB::transaction(function () use ($booking) {
             $booking->update(['status' => 'rejected']);
-            $booking->slot->update(['is_available' => true]);
+            Slot::refreshAvailability($booking->slot->worker_id, $booking->slot->date->toDateString());
         });
 
         $booking->notify(new BookingRejectedCustomer($booking));

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Service;
 use App\Models\User;
 use App\Models\WorkerProfile;
 use App\Notifications\WorkerInvite;
@@ -33,7 +34,7 @@ class WorkerController extends Controller
             'phone' => 'nullable|string',
         ]);
 
-        $inviteToken = $data['email'] ? Str::uuid()->toString() : null;
+        $inviteToken = ! empty($data['email']) ? Str::uuid()->toString() : null;
 
         $worker = User::create([
             'name' => $data['name'],
@@ -47,6 +48,9 @@ class WorkerController extends Controller
             'user_id' => $worker->id,
             'phone' => $data['phone'] ?? null,
         ]);
+
+        // Novi radnik podrazumevano radi sve aktivne usluge firme
+        $worker->services()->sync(Service::where('is_active', true)->pluck('id'));
 
         if ($inviteToken) {
             $tenant = app('current_tenant');

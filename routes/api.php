@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 // Platform-level rute — bez tenant konteksta
 Route::post('/register', [RegisterController::class, 'store']);
+Route::get('/register/subdomain-preview', [RegisterController::class, 'subdomainPreview'])->middleware('throttle:60,1');
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/push/vapid-public-key', [PushController::class, 'vapidPublicKey']);
 Route::get('/bookings/{token}/confirm-by-link', [BookingController::class, 'confirmByLink'])
@@ -31,7 +32,9 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
 // Superadmin rute — ne vezane za tenant
 Route::middleware(['auth:sanctum', 'superadmin'])->prefix('superadmin')->group(function () {
     Route::get('/tenants', [SuperadminController::class, 'tenants']);
+    Route::post('/tenants', [SuperadminController::class, 'storeTenant']);
     Route::get('/tenants/{tenant}', [SuperadminController::class, 'showTenant']);
+    Route::delete('/tenants/{tenant}', [SuperadminController::class, 'destroyTenant']);
     Route::patch('/tenants/{tenant}/subscription', [SuperadminController::class, 'updateSubscription']);
     Route::patch('/tenants/{tenant}/deploy-status', [SuperadminController::class, 'updateDeployStatus']);
     Route::patch('/tenants/{tenant}/theme', [SuperadminController::class, 'updateTheme']);
@@ -43,6 +46,7 @@ Route::middleware('resolve.tenant:optional')->get('/tenant/config', [TenantContr
 // Javne tenant rute — tenant obavezan
 Route::middleware(['resolve.tenant', 'check.subscription'])->group(function () {
     Route::get('/slots/available', [SlotController::class, 'available']);
+    Route::get('/slots/times', [SlotController::class, 'times']);
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::get('/bookings/{token}', [BookingController::class, 'show']);
     Route::patch('/bookings/{token}/cancel', [BookingController::class, 'cancel']);

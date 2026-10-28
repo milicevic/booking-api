@@ -14,14 +14,14 @@ return [
     ],
 
     'booking_pending_customer' => [
-        'subject' => 'Zahtjev za rezervaciju primljen ⏳',
+        'subject' => 'Zahtev za rezervaciju je primljen ⏳',
         'greeting' => 'Zdravo, :name!',
-        'line1' => 'Vaš zahtjev za rezervaciju je uspješno primljen i čeka potvrdu.',
+        'line1' => 'Vaš zahtev za rezervaciju je primljen i čeka potvrdu.',
         'worker' => '**Radnik:** :name',
         'service' => '**Usluga:** :name',
         'date' => '**Datum:** :date',
         'time' => '**Vreme:** :start – :end',
-        'line2' => 'Bićete obaviješteni čim klijent potvrdi ili odbije vašu rezervaciju.',
+        'line2' => 'Obavestićemo vas čim rezervacija bude potvrđena ili odbijena.',
         'action' => 'Pogledaj rezervaciju',
         'salutation' => 'Hvala što koristite naš servis!',
     ],
@@ -29,7 +29,7 @@ return [
     'booking_pending_client' => [
         'subject' => 'Nova rezervacija čeka potvrdu — :name',
         'greeting' => 'Nova rezervacija!',
-        'line' => 'Korisnik je zatražio rezervaciju. Potvrdite ili odbijte zahtjev.',
+        'line' => 'Korisnik je zatražio rezervaciju. Potvrdite ili odbijte zahtev.',
         'customer' => '**Korisnik:** :name',
         'contact' => '**Kontakt:** :contact',
         'worker' => '**Radnik:** :name',
@@ -53,7 +53,7 @@ return [
         'date' => '**Datum:** :date',
         'time' => '**Vreme:** :start – :end',
         'note' => '**Napomena:** :note',
-        'action' => 'Otvori dashboard',
+        'action' => 'Otvori kontrolnu tablu',
         'salutation' => 'Booking App',
     ],
 
@@ -64,17 +64,17 @@ return [
         'worker' => '**Radnik:** :name',
         'date' => '**Datum:** :date',
         'time' => '**Vreme:** :start – :end',
-        'line2' => 'Slobodni termini su i dalje dostupni — možete probati rezervisati drugi.',
+        'line2' => 'Slobodni termini su i dalje dostupni — možete da rezervišete drugi.',
         'salutation' => 'Booking App',
     ],
 
     'welcome_client' => [
         'subject' => 'Dobrodošli u :app_name!',
         'greeting' => 'Zdravo, :name!',
-        'line1' => 'Vaš nalog za **:app_name** je uspješno kreiran.',
-        'line2' => 'Imate **7 dana besplatnog trial perioda** (do :date) da isprobate sve funkcionalnosti.',
+        'line1' => 'Vaš nalog za **:app_name** je uspešno kreiran.',
+        'line2' => 'Imate **7 dana besplatnog probnog perioda** (do :date) da isprobate sve mogućnosti.',
         'action' => 'Prijavite se',
-        'line3' => 'Na vašem dashboardu možete dodavati radnike, konfigurisati termine i pratiti rezervacije.',
+        'line3' => 'Na kontrolnoj tabli možete da dodajete radnike, usluge i termine i da pratite rezervacije.',
         'line4' => 'Hvala što koristite našu platformu!',
     ],
 
@@ -85,7 +85,7 @@ return [
         'worker' => '**Radnik:** :name',
         'date' => '**Datum:** :date',
         'time' => '**Vreme:** :start – :end',
-        'line2' => 'Slobodni termini su i dalje dostupni — možete rezervisati novi.',
+        'line2' => 'Slobodni termini su i dalje dostupni — možete da rezervišete novi.',
         'salutation' => 'Booking App',
     ],
 

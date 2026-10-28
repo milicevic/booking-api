@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +17,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
 
 #[Fillable(['name', 'email', 'password', 'role', 'client_id', 'can_edit_slots', 'is_suspended', 'tenant_id', 'invite_token'])]
 #[Hidden(['password'])]
-class User extends Authenticatable
+class User extends Authenticatable implements HasLocalePreference
 {
     /** @use HasFactory<UserFactory> */
     use BelongsToTenant, HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable;
@@ -33,6 +34,12 @@ class User extends Authenticatable
             'can_edit_slots' => 'boolean',
             'is_suspended' => 'boolean',
         ];
+    }
+
+    /** Vlasnik i radnici firme dobijaju obaveštenja na jeziku firme, bez obzira na to ko je pokrenuo slanje. */
+    public function preferredLocale(): ?string
+    {
+        return $this->tenant?->locale;
     }
 
     /** Workers belonging to this client user. */

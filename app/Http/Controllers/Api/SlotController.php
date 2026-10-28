@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Service;
 use App\Models\Slot;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SlotController extends Controller
@@ -20,6 +22,11 @@ class SlotController extends Controller
 
         $slots = Slot::with(['worker', 'worker.services' => fn ($q) => $q->where('is_active', true)])
             ->where('is_available', true)
+            ->where(fn ($q) => $q
+                ->whereDate('date', '>', today())
+                ->orWhere(fn ($today) => $today
+                    ->whereDate('date', today())
+                    ->where('start_time', '>', now()->format('H:i:s'))))
             ->when($request->date, fn ($q) => $q->whereDate('date', $request->date))
             ->when($request->worker_id, fn ($q) => $q->where('worker_id', $request->worker_id))
             ->when($request->service_id, fn ($q) => $q->whereHas(
@@ -31,6 +38,31 @@ class SlotController extends Controller
             ->get();
 
         return response()->json($slots);
+    }
+
+    /**
+     * Javno — vremena u koja kupac može da zakaže kod radnika, prema trajanju izabrane usluge.
+     */
+    public function times(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'worker_id' => 'required|integer|exists:users,id',
+            'service_id' => 'nullable|integer|exists:services,id',
+            'date' => 'nullable|date',
+        ]);
+
+        $duration = null;
+        if (! empty($data['service_id'])) {
+            $service = Service::where('id', $data['service_id'])
+                ->where('is_active', true)
+                ->whereHas('workers', fn ($q) => $q->where('users.id', $data['worker_id']))
+                ->first();
+
+            abort_if(! $service, 422, __('messages.service_unavailable_for_worker'));
+            $duration = $service->duration_minutes;
+        }
+
+        return response()->json(Slot::bookableTimes((int) $data['worker_id'], $duration, $data['date'] ?? null));
     }
 
     // Admin/Worker rute

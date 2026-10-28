@@ -39,4 +39,21 @@ class Service extends Model
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    /**
+     * Naziv usluge sa cenom u valuti firme, npr. "Šišanje (1.200 RSD)".
+     */
+    public function labelWithPrice(): string
+    {
+        if ($this->price === null) {
+            return $this->name;
+        }
+
+        $price = (float) $this->price;
+        $decimals = floor($price) == $price ? 0 : 2;
+        [$decimalSeparator, $thousandsSeparator] = app()->getLocale() === 'sr' ? [',', '.'] : ['.', ','];
+        $currency = $this->tenant?->currency ?? 'RSD';
+
+        return "{$this->name} (".number_format($price, $decimals, $decimalSeparator, $thousandsSeparator)." {$currency})";
+    }
 }

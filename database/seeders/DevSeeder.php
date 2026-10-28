@@ -72,29 +72,32 @@ class DevSeeder extends Seeder
                 ->get();
 
             if ($existingWorkers->isEmpty()) {
-                $workers = User::factory(2)->worker($client->id)->create([
+                $existingWorkers = User::factory(2)->worker($client->id)->create([
                     'tenant_id' => $tenant->id,
                 ]);
 
-                foreach ($workers as $worker) {
+                foreach ($existingWorkers as $worker) {
                     WorkerProfile::create([
                         'user_id' => $worker->id,
                         'tenant_id' => $tenant->id,
                     ]);
-
-                    $this->createSlotsForWorker($worker->id, $tenant->id);
                 }
+            }
+
+            foreach ($existingWorkers as $worker) {
+                $this->createSlotsForWorker($worker->id, $tenant->id);
             }
         }
     }
 
     private function createSlotsForWorker(int $workerId, int $tenantId): void
     {
-        $alreadyExists = Slot::withoutGlobalScopes()
+        $hasUpcomingSlots = Slot::withoutGlobalScopes()
             ->where('worker_id', $workerId)
+            ->where('date', '>', Carbon::today())
             ->exists();
 
-        if ($alreadyExists) {
+        if ($hasUpcomingSlots) {
             return;
         }
 

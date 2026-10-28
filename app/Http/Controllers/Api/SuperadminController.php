@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
+use App\Notifications\WelcomeClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,6 +16,24 @@ class SuperadminController extends Controller
         $tenants = Tenant::withCount('users')->orderBy('created_at', 'desc')->get();
 
         return response()->json($tenants);
+    }
+
+    /** Ručno kreira firmu sa vlasnikom; sajt je odmah dostupan, kao i posle registracije. */
+    public function storeTenant(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'app_name' => ['required', 'string', 'max:255'],
+            'subdomain' => ['nullable', 'string', 'alpha_dash', 'max:63', 'unique:tenants,subdomain'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+        ]);
+
+        [$tenant, $user] = Tenant::createWithClient($data, $data);
+
+        $user->notify(new WelcomeClient($tenant));
+
+        return response()->json($tenant->load('users'), 201);
     }
 
     public function showTenant(Tenant $tenant): JsonResponse
@@ -59,5 +78,12 @@ class SuperadminController extends Controller
         $tenant->update($validated);
 
         return response()->json($tenant->fresh());
+    }
+
+    public function destroyTenant(Tenant $tenant): JsonResponse
+    {
+        $tenant->deleteWithData();
+
+        return response()->json(null, 204);
     }
 }

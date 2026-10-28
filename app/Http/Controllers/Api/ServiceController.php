@@ -38,7 +38,12 @@ class ServiceController extends Controller
 
         $service = Service::create($data);
 
-        return response()->json($service, 201);
+        // Podrazumevano uslugu rade svi radnici; vlasnik posle može da isključi pojedine
+        $service->workers()->sync(
+            User::withoutGlobalScopes()->where('tenant_id', $service->tenant_id)->where('role', 'worker')->pluck('id')
+        );
+
+        return response()->json($service->load(['workers' => fn ($q) => $q->select('users.id', 'users.name')]), 201);
     }
 
     public function update(Request $request, Service $service): JsonResponse

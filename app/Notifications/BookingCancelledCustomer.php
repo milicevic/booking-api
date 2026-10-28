@@ -30,7 +30,7 @@ class BookingCancelledCustomer extends Notification
             ->line(__("{$t}.line1"))
             ->line(__("{$t}.worker", ['name' => $worker->name]))
             ->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
-            ->line(__("{$t}.time", ['start' => $slot->start_time, 'end' => $slot->end_time]))
+            ->line(__("{$t}.time", ['start' => substr($this->booking->start_time, 0, 5), 'end' => substr($this->booking->end_time, 0, 5)]))
             ->line(__("{$t}.line2"))
             ->salutation(__("{$t}.salutation"));
     }

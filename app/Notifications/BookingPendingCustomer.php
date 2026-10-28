@@ -31,14 +31,14 @@ class BookingPendingCustomer extends Notification
             ->line(__("{$t}.worker", ['name' => $worker->name]));
 
         if ($this->booking->service) {
-            $mail->line(__("{$t}.service", ['name' => $this->booking->service->name]));
+            $mail->line(__("{$t}.service", ['name' => $this->booking->service->labelWithPrice()]));
         }
 
         return $mail
             ->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
-            ->line(__("{$t}.time", ['start' => $slot->start_time, 'end' => $slot->end_time]))
+            ->line(__("{$t}.time", ['start' => substr($this->booking->start_time, 0, 5), 'end' => substr($this->booking->end_time, 0, 5)]))
             ->line(__("{$t}.line2"))
-            ->action(__("{$t}.action"), route('booking.manage', $this->booking->token))
+            ->action(__("{$t}.action"), $this->booking->manageUrl())
             ->salutation(__("{$t}.salutation"));
     }
 }

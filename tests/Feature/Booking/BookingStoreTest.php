@@ -184,7 +184,7 @@ class BookingStoreTest extends TestCase
         $client = User::factory()->client()->create();
         ClientProfile::factory()->create(['user_id' => $client->id]);
         $slot = $this->makeSlotForClient($client);
-        $slot->update(['is_available' => false]);
+        Booking::factory()->create(['slot_id' => $slot->id, 'status' => 'confirmed']);
 
         $response = $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
@@ -224,6 +224,51 @@ class BookingStoreTest extends TestCase
 
         $response->assertStatus(201);
         $this->assertDatabaseHas('bookings', ['slot_id' => $slot->id, 'service_id' => $service->id]);
+    }
+
+    public function test_service_is_required_when_worker_offers_services(): void
+    {
+        Notification::fake();
+
+        $client = User::factory()->client()->create(['tenant_id' => $this->tenant->id]);
+        ClientProfile::factory()->create(['user_id' => $client->id]);
+        $worker = User::factory()->worker($client->id)->create(['tenant_id' => $this->tenant->id]);
+        $slot = Slot::factory()->create(['worker_id' => $worker->id, 'is_available' => true]);
+        $worker->services()->attach(Service::factory()->create()->id);
+
+        $this->withHeader('Accept-Language', 'sr')
+            ->postJson('/api/bookings', [
+                'slot_id' => $slot->id,
+                'customer_name' => 'Ana Anić',
+                'customer_email' => 'ana@example.com',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Izaberite uslugu.');
+
+        $this->assertTrue($slot->fresh()->is_available);
+    }
+
+    public function test_booking_response_and_details_include_service(): void
+    {
+        Notification::fake();
+
+        $client = User::factory()->client()->create(['tenant_id' => $this->tenant->id]);
+        ClientProfile::factory()->create(['user_id' => $client->id]);
+        $worker = User::factory()->worker($client->id)->create(['tenant_id' => $this->tenant->id]);
+        $slot = Slot::factory()->create(['worker_id' => $worker->id, 'is_available' => true]);
+        $service = Service::factory()->create(['name' => 'Šišanje', 'price' => 1200]);
+        $worker->services()->attach($service->id);
+
+        $token = $this->postJson('/api/bookings', [
+            'slot_id' => $slot->id,
+            'service_id' => $service->id,
+            'customer_name' => 'Ana Anić',
+            'customer_email' => 'ana@example.com',
+        ])->assertCreated()->assertJsonPath('service.name', 'Šišanje')->json('token');
+
+        $this->getJson("/api/bookings/{$token}")->assertOk()->assertJsonPath('service.name', 'Šišanje');
+        $this->actingAs($client)->getJson('/api/bookings')->assertOk()->assertJsonPath('0.service.name', 'Šišanje');
+        $this->withHeader('Accept-Language', 'sr')->get("/manage/{$token}")->assertOk()->assertSee('Šišanje (1.200 RSD)');
     }
 
     public function test_returns_422_when_service_not_assigned_to_slot_worker(): void

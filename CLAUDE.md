@@ -159,4 +159,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - To run all tests in a file: `php artisan test --compact tests/Feature/ExampleTest.php`.
 - To filter on a particular test name: `php artisan test --compact --filter=testName` (recommended after making a change to a related file).
 
+## Pre završetka zadatka
+Pokreni: ./vendor/bin/pint && ./vendor/bin/phpstan analyse && php artisan test
+Zadatak nije gotov dok sve ne prođe.
 </laravel-boost-guidelines>

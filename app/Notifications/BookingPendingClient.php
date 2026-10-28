@@ -34,7 +34,7 @@ class BookingPendingClient extends Notification
             'worker_name' => $slot->worker->name,
             'service_name' => $this->booking->service?->name,
             'date' => $slot->date->format('Y-m-d'),
-            'start_time' => $slot->start_time,
+            'start_time' => $this->booking->start_time,
         ];
     }
 
@@ -49,7 +49,7 @@ class BookingPendingClient extends Notification
             ->body(__("{$t}.body", [
                 'name' => $this->booking->customer_name,
                 'date' => $slot->date->format('d.m.Y'),
-                'start' => $slot->start_time,
+                'start' => substr($this->booking->start_time, 0, 5),
                 'worker' => $worker->name,
             ]))
             ->icon('/icon.png');
@@ -83,11 +83,11 @@ class BookingPendingClient extends Notification
             ->line(__("{$t}.worker", ['name' => $worker->name]));
 
         if ($this->booking->service) {
-            $mail->line(__("{$t}.service", ['name' => $this->booking->service->name]));
+            $mail->line(__("{$t}.service", ['name' => $this->booking->service->labelWithPrice()]));
         }
 
         $mail->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
-            ->line(__("{$t}.time", ['start' => $slot->start_time, 'end' => $slot->end_time]));
+            ->line(__("{$t}.time", ['start' => substr($this->booking->start_time, 0, 5), 'end' => substr($this->booking->end_time, 0, 5)]));
 
         if ($this->booking->note) {
             $mail->line(__("{$t}.note", ['note' => $this->booking->note]));

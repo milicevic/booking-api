@@ -55,6 +55,8 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
     'platform_host' => env('PLATFORM_HOST', 'localhost'),
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+    // Port sajta klijenta u linkovima iz mejlova (lokalno vite radi na 5173; u produkciji prazno)
+    'tenant_site_port' => env('TENANT_SITE_PORT'),
 
     /*
     |--------------------------------------------------------------------------

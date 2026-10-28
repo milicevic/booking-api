@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="bs">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vaša rezervacija</title>
+    <title>{{ __('manage.title') }}</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
 
@@ -194,7 +194,7 @@
         <div class="card">
             <div class="card-header">
                 <span class="icon">📅</span>
-                <h1>Vaša rezervacija</h1>
+                <h1>{{ __('manage.title') }}</h1>
                 <p>{{ $booking->customer_name }}</p>
             </div>
 
@@ -206,47 +206,47 @@
                     </div>
                 @endif
 
-                @php
-                    $statusLabels = [
-                        'pending'   => ['label' => 'Čeka potvrdu',  'class' => 'status-pending'],
-                        'confirmed' => ['label' => 'Potvrđena',     'class' => 'status-confirmed'],
-                        'cancelled' => ['label' => 'Otkazana',      'class' => 'status-cancelled'],
-                        'rejected'  => ['label' => 'Odbijena',      'class' => 'status-rejected'],
-                    ];
-                    $statusInfo = $statusLabels[$booking->status] ?? ['label' => $booking->status, 'class' => ''];
-                @endphp
-
-                <span class="status-badge {{ $statusInfo['class'] }}">
-                    {{ $statusInfo['label'] }}
+                <span class="status-badge status-{{ $booking->status }}">
+                    {{ __("manage.status.{$booking->status}") }}
                 </span>
 
                 <div class="detail-row">
                     <span class="detail-icon">👤</span>
                     <div>
-                        <div class="detail-label">Radnik</div>
+                        <div class="detail-label">{{ __('manage.worker') }}</div>
                         <div class="detail-value">{{ $booking->slot->worker->name }}</div>
                     </div>
                 </div>
 
+                @if ($booking->service)
+                    <div class="detail-row">
+                        <span class="detail-icon">✂️</span>
+                        <div>
+                            <div class="detail-label">{{ __('manage.service') }}</div>
+                            <div class="detail-value">{{ $booking->service->labelWithPrice() }}</div>
+                        </div>
+                    </div>
+                @endif
+
                 <div class="detail-row">
                     <span class="detail-icon">📆</span>
                     <div>
-                        <div class="detail-label">Datum</div>
-                        <div class="detail-value">{{ $booking->slot->date->format('d.m.Y') }}</div>
+                        <div class="detail-label">{{ __('manage.date') }}</div>
+                        <div class="detail-value">{{ $booking->slot->date->format(__('manage.date_format')) }}</div>
                     </div>
                 </div>
 
                 <div class="detail-row">
                     <span class="detail-icon">🕐</span>
                     <div>
-                        <div class="detail-label">Vreme</div>
-                        <div class="detail-value">{{ $booking->slot->start_time }} – {{ $booking->slot->end_time }}</div>
+                        <div class="detail-label">{{ __('manage.time') }}</div>
+                        <div class="detail-value">{{ substr($booking->start_time, 0, 5) }} – {{ substr($booking->end_time, 0, 5) }}</div>
                     </div>
                 </div>
 
                 @if($booking->note)
                     <div class="note-box">
-                        <div class="note-label">Napomena</div>
+                        <div class="note-label">{{ __('manage.note') }}</div>
                         <p>{{ $booking->note }}</p>
                     </div>
                 @endif
@@ -256,15 +256,15 @@
             <div class="card-footer">
                 @if(in_array($booking->status, ['confirmed', 'pending']))
                     <form method="POST" action="{{ route('booking.cancel', $booking->token) }}"
-                          onsubmit="return confirm('Da li ste sigurni da želite otkazati rezervaciju?')">
+                          onsubmit="return confirm(@js(__('manage.cancel_confirm')))">
                         @csrf
                         <button type="submit" class="btn-cancel">
-                            Otkaži rezervaciju
+                            {{ __('manage.cancel_button') }}
                         </button>
                     </form>
                 @else
                     <div class="cancelled-notice">
-                        Ova rezervacija je {{ $statusInfo['label'] | lower }}.
+                        {{ __("manage.status_notice.{$booking->status}") }}
                     </div>
                 @endif
             </div>

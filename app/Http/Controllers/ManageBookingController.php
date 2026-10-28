@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Slot;
 use App\Notifications\BookingCancelledCustomer;
 use Illuminate\Support\Facades\DB;
 
@@ -10,7 +11,7 @@ class ManageBookingController extends Controller
 {
     public function show(string $token)
     {
-        $booking = Booking::with('slot.worker')
+        $booking = Booking::with(['slot.worker', 'service', 'tenant'])
             ->where('token', $token)
             ->firstOrFail();
 
@@ -26,7 +27,7 @@ class ManageBookingController extends Controller
 
         DB::transaction(function () use ($booking) {
             $booking->update(['status' => 'cancelled']);
-            $booking->slot->update(['is_available' => true]);
+            Slot::refreshAvailability($booking->slot->worker_id, $booking->slot->date->toDateString());
         });
 
         if ($booking->customer_email) {
@@ -34,6 +35,6 @@ class ManageBookingController extends Controller
         }
 
         return redirect()->route('booking.manage', $token)
-            ->with('success', 'Vaša rezervacija je uspješno otkazana.');
+            ->with('success', __('manage.cancelled_success'));
     }
 }

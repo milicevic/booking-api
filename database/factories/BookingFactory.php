@@ -19,6 +19,8 @@ class BookingFactory extends Factory
     {
         return [
             'slot_id' => Slot::factory(),
+            'start_time' => fn (array $attributes) => Slot::withoutGlobalScopes()->find($attributes['slot_id'])?->start_time,
+            'end_time' => fn (array $attributes) => Slot::withoutGlobalScopes()->find($attributes['slot_id'])?->end_time,
             'customer_name' => $this->faker->name(),
             'customer_email' => $this->faker->safeEmail(),
             'customer_phone' => $this->faker->phoneNumber(),

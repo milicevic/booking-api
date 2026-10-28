@@ -3,6 +3,8 @@
 namespace Tests\Feature\Service;
 
 use App\Models\Service;
+use App\Models\Slot;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -71,6 +73,60 @@ class ServiceTest extends TestCase
             ->assertJsonPath('duration_minutes', 45);
 
         $this->assertDatabaseHas('services', ['name' => 'Šišanje', 'tenant_id' => $this->tenant->id]);
+    }
+
+    public function test_new_service_is_assigned_to_all_tenant_workers(): void
+    {
+        $client = User::factory()->client()->create(['tenant_id' => $this->tenant->id]);
+        $workerA = User::factory()->worker($client->id)->create(['tenant_id' => $this->tenant->id]);
+        $workerB = User::factory()->worker($client->id)->create(['tenant_id' => $this->tenant->id]);
+        $otherTenant = Tenant::factory()->create();
+        $otherClient = User::factory()->client()->create(['tenant_id' => $otherTenant->id]);
+        $otherWorker = User::factory()->worker($otherClient->id)->create(['tenant_id' => $otherTenant->id]);
+
+        $response = $this->actingAs($client)->postJson('/api/services', [
+            'name' => 'Šišanje',
+            'duration_minutes' => 30,
+        ]);
+
+        $response->assertCreated()->assertJsonCount(2, 'workers');
+        $serviceId = $response->json('id');
+        $this->assertDatabaseHas('worker_services', ['service_id' => $serviceId, 'worker_id' => $workerA->id]);
+        $this->assertDatabaseHas('worker_services', ['service_id' => $serviceId, 'worker_id' => $workerB->id]);
+        $this->assertDatabaseMissing('worker_services', ['service_id' => $serviceId, 'worker_id' => $otherWorker->id]);
+    }
+
+    public function test_new_service_is_offered_on_booking_page(): void
+    {
+        $client = User::factory()->client()->create(['tenant_id' => $this->tenant->id]);
+        $worker = User::factory()->worker($client->id)->create(['tenant_id' => $this->tenant->id]);
+        Slot::factory()->create(['worker_id' => $worker->id, 'date' => today()->addDay()->toDateString()]);
+
+        $this->actingAs($client)->postJson('/api/services', [
+            'name' => 'Šišanje',
+            'duration_minutes' => 30,
+            'price' => 1200,
+        ])->assertCreated();
+
+        $this->getJson('/api/slots/available')
+            ->assertOk()
+            ->assertJsonPath('0.worker.services.0.name', 'Šišanje')
+            ->assertJsonPath('0.worker.services.0.price', '1200.00');
+    }
+
+    public function test_new_worker_gets_all_active_services(): void
+    {
+        $client = User::factory()->client()->create(['tenant_id' => $this->tenant->id]);
+        $active = Service::factory()->create();
+        $inactive = Service::factory()->create(['is_active' => false]);
+
+        $workerId = $this->actingAs($client)
+            ->postJson('/api/workers', ['name' => 'Petar Perić'])
+            ->assertCreated()
+            ->json('id');
+
+        $this->assertDatabaseHas('worker_services', ['service_id' => $active->id, 'worker_id' => $workerId]);
+        $this->assertDatabaseMissing('worker_services', ['service_id' => $inactive->id, 'worker_id' => $workerId]);
     }
 
     public function test_worker_cannot_create_service(): void

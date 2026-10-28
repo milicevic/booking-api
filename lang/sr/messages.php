@@ -13,7 +13,8 @@ return [
 
     // Booking
     'slot_unavailable' => 'Termin više nije dostupan.',
-    'service_unavailable_for_worker' => 'Servis nije dostupan za ovog radnika.',
+    'service_required' => 'Izaberite uslugu.',
+    'service_unavailable_for_worker' => 'Izabrana usluga nije dostupna kod ovog radnika.',
     'booking_not_pending' => 'Rezervacija nije u statusu čekanja.',
     'booking_cancelled' => 'Rezervacija otkazana.',
     'booking_confirmed' => 'Rezervacija potvrđena.',
@@ -28,6 +29,16 @@ return [
     // Push notifikacije
     'push_subscribed' => 'Push notifikacije su uključene.',
     'push_unsubscribed' => 'Push notifikacije su isključene.',
+
+    // Nepostojeći podaci (404)
+    'not_found' => [
+        'booking' => 'Rezervacija ne postoji ili više nije aktivna.',
+        'slot' => 'Termin nije pronađen.',
+        'service' => 'Usluga nije pronađena.',
+        'user' => 'Korisnik nije pronađen.',
+        'tenant' => 'Firma nije pronađena.',
+        'database_notification' => 'Obaveštenje nije pronađeno.',
+    ],
 
     // Notifikacije
     'notification_read' => 'Notifikacija označena kao pročitana.',

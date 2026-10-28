@@ -48,6 +48,20 @@ class RegisterTenantTest extends TestCase
         $this->assertTrue($tenant->trial_ends_at->isAfter(now()->addDays(6)));
     }
 
+    public function test_registered_tenant_site_is_available_immediately(): void
+    {
+        Notification::fake();
+
+        $this->postJson('/api/register', $this->validPayload())
+            ->assertCreated()
+            ->assertJsonPath('tenant.subdomain', 'moj-salon')
+            ->assertJsonPath('tenant.deploy_status', 'deployed');
+
+        $this->getJson('http://moj-salon.slotres.click/api/tenant/config')
+            ->assertOk()
+            ->assertJsonPath('app_name', 'Moj Salon');
+    }
+
     public function test_user_is_linked_to_tenant(): void
     {
         Notification::fake();
@@ -135,5 +149,55 @@ class RegisterTenantTest extends TestCase
 
         $response->assertStatus(422)
             ->assertJsonValidationErrors(['name', 'email', 'password', 'app_name']);
+    }
+
+    public function test_registration_works_without_theme_and_colors(): void
+    {
+        Notification::fake();
+
+        $this->postJson('/api/register', [
+            'name' => 'Ana Anić',
+            'email' => 'ana@salon.com',
+            'password' => 'tajna1234',
+            'app_name' => 'Moj Salon',
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('tenants', ['app_name' => 'Moj Salon', 'theme' => 'minimal', 'primary_color' => null]);
+    }
+
+    public function test_subdomain_preview_slugs_app_name(): void
+    {
+        $this->getJson('/api/register/subdomain-preview?app_name='.urlencode('Frizerski salon Đurđa & Čeda'))
+            ->assertOk()
+            ->assertExactJson(['subdomain' => 'frizerski-salon-durda-ceda']);
+    }
+
+    public function test_subdomain_preview_matches_registered_subdomain_when_name_is_taken(): void
+    {
+        Notification::fake();
+        $this->postJson('/api/register', $this->validPayload());
+
+        $preview = $this->getJson('/api/register/subdomain-preview?app_name=Moj%20Salon')
+            ->assertOk()
+            ->json('subdomain');
+
+        $this->assertSame('moj-salon-1', $preview);
+
+        $this->postJson('/api/register', $this->validPayload(['email' => 'druga@salon.com']))->assertCreated();
+        $this->assertDatabaseHas('tenants', ['subdomain' => $preview]);
+    }
+
+    public function test_subdomain_preview_falls_back_when_name_has_no_letters(): void
+    {
+        $this->getJson('/api/register/subdomain-preview?app_name='.urlencode('★★★'))
+            ->assertOk()
+            ->assertExactJson(['subdomain' => 'moj-salon']);
+    }
+
+    public function test_subdomain_preview_requires_app_name(): void
+    {
+        $this->getJson('/api/register/subdomain-preview')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['app_name']);
     }
 }

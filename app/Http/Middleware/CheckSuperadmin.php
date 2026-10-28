@@ -16,7 +16,7 @@ class CheckSuperadmin
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->user() || $request->user()->role !== 'superadmin') {
-            return response()->json(['message' => 'Forbidden.'], Response::HTTP_FORBIDDEN);
+            return response()->json(['message' => __('http.403')], Response::HTTP_FORBIDDEN);
         }
 
         return $next($request);
