@@ -27,7 +27,8 @@ return [
         [
             '#^https?://[a-z0-9\-]+\.localhost(:\d+)?$#',
             '#^https://[a-z0-9\-]+\.vercel\.app$#',
-            env('PLATFORM_HOST') ? '#^https://[a-z0-9\-]+\.'.preg_quote(env('PLATFORM_HOST'), '#').'$#' : null,
+            // Glavni domen platforme (slotres.click, www.slotres.click) i sajtovi klijenata (*.slotres.click)
+            env('PLATFORM_HOST') ? '#^https://([a-z0-9\-]+\.)?'.preg_quote(env('PLATFORM_HOST'), '#').'(:\d+)?$#' : null,
         ],
         explode(',', env('CORS_ALLOWED_PATTERNS', ''))
     )),

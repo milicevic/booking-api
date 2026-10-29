@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
@@ -29,7 +31,7 @@ class ClientController extends Controller
         abort_if($request->user()->role !== 'client', 403);
 
         $data = $request->validate([
-            'subdomain' => ['nullable', 'string', 'alpha_dash', 'max:63'],
+            'subdomain' => ['nullable', 'string', 'alpha_dash', 'max:63', Rule::unique('tenants', 'subdomain')->ignore(app('current_tenant')->id), Rule::notIn(Tenant::RESERVED_SUBDOMAINS)],
             'custom_domain' => ['nullable', 'string', 'max:253'],
         ]);
 

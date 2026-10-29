@@ -200,4 +200,20 @@ class RegisterTenantTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['app_name']);
     }
+
+    public function test_reserved_subdomain_cannot_be_chosen(): void
+    {
+        $this->postJson('/api/register', $this->validPayload(['subdomain' => 'www']))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['subdomain']);
+    }
+
+    public function test_business_named_like_reserved_subdomain_gets_suffix(): void
+    {
+        Notification::fake();
+
+        $this->postJson('/api/register', $this->validPayload(['app_name' => 'WWW']))
+            ->assertCreated()
+            ->assertJsonPath('tenant.subdomain', 'www-1');
+    }
 }

@@ -35,6 +35,9 @@ class Tenant extends Model
     /** Valute koje firma može da izabere za cene usluga. */
     public const CURRENCIES = ['RSD', 'EUR', 'BAM', 'MKD', 'USD', 'GBP', 'CHF'];
 
+    /** Poddomeni koje koristi sama platforma, pa ih firma ne može dobiti. */
+    public const RESERVED_SUBDOMAINS = ['www', 'api', 'admin', 'app', 'mail', 'static', 'cdn'];
+
     /** Jezici na kojima firma može da prima obaveštenja. */
     public const LOCALES = ['sr', 'en'];
 
@@ -95,7 +98,7 @@ class Tenant extends Model
         $subdomain = $base;
         $counter = 1;
 
-        while (static::where('subdomain', $subdomain)->exists()) {
+        while (in_array($subdomain, static::RESERVED_SUBDOMAINS) || static::where('subdomain', $subdomain)->exists()) {
             $subdomain = "{$base}-{$counter}";
             $counter++;
         }
