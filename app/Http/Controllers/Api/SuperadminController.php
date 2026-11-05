@@ -3,86 +3,60 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Superadmin\StoreTenantRequest;
+use App\Http\Requests\Superadmin\UpdateDeployStatusRequest;
+use App\Http\Requests\Superadmin\UpdateSubscriptionRequest;
+use App\Http\Requests\Superadmin\UpdateThemeRequest;
+use App\Http\Resources\TenantResource;
 use App\Models\Tenant;
-use App\Notifications\WelcomeClient;
+use App\Services\Contracts\TenantRegistrationServiceInterface;
+use App\Services\Contracts\TenantServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class SuperadminController extends Controller
 {
-    public function tenants(): JsonResponse
-    {
-        $tenants = Tenant::withCount('users')->orderBy('created_at', 'desc')->get();
+    public function __construct(private readonly TenantServiceInterface $tenants) {}
 
-        return response()->json($tenants);
+    public function tenants(): AnonymousResourceCollection
+    {
+        return TenantResource::collection($this->tenants->allWithUserCount());
     }
 
     /** Ručno kreira firmu sa vlasnikom; sajt je odmah dostupan, kao i posle registracije. */
-    public function storeTenant(Request $request): JsonResponse
+    public function storeTenant(StoreTenantRequest $request, TenantRegistrationServiceInterface $registration): JsonResponse
     {
-        $data = $request->validate([
-            'app_name' => ['required', 'string', 'max:255'],
-            'subdomain' => ['nullable', 'string', 'alpha_dash', 'max:63', 'unique:tenants,subdomain', Rule::notIn(Tenant::RESERVED_SUBDOMAINS)],
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
-        ]);
+        /** @var array{name: string, email: string, password: string, app_name: string, subdomain?: string|null} $data */
+        $data = $request->validated();
 
-        [$tenant, $user] = Tenant::createWithClient($data, $data);
-
-        $user->notify(new WelcomeClient($tenant));
-
-        return response()->json($tenant->load('users'), 201);
+        return TenantResource::make($registration->createBySuperadmin($data)->load('users'))
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function showTenant(Tenant $tenant): JsonResponse
+    public function showTenant(Tenant $tenant): TenantResource
     {
-        return response()->json($tenant->load('users'));
+        return TenantResource::make($tenant->load('users'));
     }
 
-    public function updateSubscription(Request $request, Tenant $tenant): JsonResponse
+    public function updateSubscription(UpdateSubscriptionRequest $request, Tenant $tenant): TenantResource
     {
-        $validated = $request->validate([
-            'subscription_status' => ['required', Rule::in(['trialing', 'active', 'expired', 'canceled'])],
-            'subscription_ends_at' => ['nullable', 'date'],
-            'trial_ends_at' => ['nullable', 'date'],
-        ]);
-
-        $tenant->update($validated);
-
-        return response()->json($tenant->fresh());
+        return TenantResource::make($this->tenants->update($tenant, $request->validated()));
     }
 
-    public function updateDeployStatus(Request $request, Tenant $tenant): JsonResponse
+    public function updateDeployStatus(UpdateDeployStatusRequest $request, Tenant $tenant): TenantResource
     {
-        $validated = $request->validate([
-            'deploy_status' => ['required', Rule::in(['pending', 'pending_deploy', 'deployed'])],
-        ]);
-
-        $tenant->update($validated);
-
-        return response()->json($tenant->fresh());
+        return TenantResource::make($this->tenants->update($tenant, $request->validated()));
     }
 
-    public function updateTheme(Request $request, Tenant $tenant): JsonResponse
+    public function updateTheme(UpdateThemeRequest $request, Tenant $tenant): TenantResource
     {
-        $validated = $request->validate([
-            'app_name' => ['nullable', 'string', 'max:255'],
-            'logo_url' => ['nullable', 'url'],
-            'primary_color' => ['nullable', 'string', 'max:20'],
-            'secondary_color' => ['nullable', 'string', 'max:20'],
-            'theme' => ['nullable', Rule::in(['minimal', 'modern', 'classic'])],
-        ]);
-
-        $tenant->update($validated);
-
-        return response()->json($tenant->fresh());
+        return TenantResource::make($this->tenants->update($tenant, $request->validated()));
     }
 
     public function destroyTenant(Tenant $tenant): JsonResponse
     {
-        $tenant->deleteWithData();
+        $this->tenants->delete($tenant);
 
         return response()->json(null, 204);
     }

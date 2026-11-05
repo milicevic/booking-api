@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property ?int $tenant_id
+ * @property ?string $phone
+ * @property ?string $business_name
+ * @property bool $auto_confirm_bookings
+ */
 class ClientProfile extends Model
 {
     /** @use HasFactory<ClientProfileFactory> */
@@ -21,6 +29,9 @@ class ClientProfile extends Model
         'auto_confirm_bookings',
     ];
 
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
@@ -28,11 +39,17 @@ class ClientProfile extends Model
         ];
     }
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return BelongsTo<Tenant, $this>
+     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);

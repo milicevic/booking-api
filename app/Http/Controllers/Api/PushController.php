@@ -3,44 +3,38 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Push\SubscribePushRequest;
+use App\Http\Requests\Push\UnsubscribePushRequest;
+use App\Http\Resources\MessageResource;
+use App\Services\Contracts\PushSubscriptionServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class PushController extends Controller
 {
-    /** Return the VAPID public key (needed by browser to subscribe). */
+    public function __construct(private readonly PushSubscriptionServiceInterface $push) {}
+
+    /** VAPID javni ključ, potreban pregledaču za pretplatu. */
     public function vapidPublicKey(): JsonResponse
     {
-        return response()->json(['vapid_public_key' => config('webpush.vapid.public_key')]);
+        return response()->json(['vapid_public_key' => $this->push->vapidPublicKey()]);
     }
 
-    /** Store a push subscription for the authenticated user. */
-    public function subscribe(Request $request): JsonResponse
+    public function subscribe(SubscribePushRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'endpoint' => 'required|string',
-            'keys.auth' => 'required|string',
-            'keys.p256dh' => 'required|string',
-        ]);
-
-        $request->user()->updatePushSubscription(
-            $data['endpoint'],
-            $data['keys']['p256dh'],
-            $data['keys']['auth'],
+        $this->push->subscribeUser(
+            $request->user(),
+            $request->string('endpoint')->toString(),
+            $request->string('keys.p256dh')->toString(),
+            $request->string('keys.auth')->toString(),
         );
 
-        return response()->json(['message' => __('messages.push_subscribed')], 201);
+        return MessageResource::make(__('messages.push_subscribed'))->response()->setStatusCode(201);
     }
 
-    /** Remove a push subscription. */
-    public function unsubscribe(Request $request): JsonResponse
+    public function unsubscribe(UnsubscribePushRequest $request): MessageResource
     {
-        $data = $request->validate([
-            'endpoint' => 'required|string',
-        ]);
+        $this->push->unsubscribeUser($request->user(), $request->string('endpoint')->toString());
 
-        $request->user()->deletePushSubscription($data['endpoint']);
-
-        return response()->json(['message' => __('messages.push_unsubscribed')]);
+        return MessageResource::make(__('messages.push_unsubscribed'));
     }
 }

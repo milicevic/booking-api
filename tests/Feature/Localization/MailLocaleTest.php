@@ -8,7 +8,7 @@ use App\Models\Slot;
 use App\Models\User;
 use App\Notifications\BookingPendingClient;
 use App\Notifications\BookingPendingCustomer;
-use App\Notifications\WelcomeClient;
+use App\Notifications\VerifyEmailAddress;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\Transport\ArrayTransport;
 use Illuminate\Support\Facades\Notification;
@@ -108,6 +108,6 @@ class MailLocaleTest extends TestCase
         ])->assertCreated()->assertJsonPath('tenant.locale', 'sr');
 
         $client = User::withoutGlobalScopes()->where('email', 'ana@salon.com')->firstOrFail();
-        Notification::assertSentTo($client, WelcomeClient::class, fn ($notification, $channels, $notifiable, $locale) => $locale === 'sr');
+        Notification::assertSentTo($client, VerifyEmailAddress::class, fn ($notification, $channels, $notifiable, $locale) => $locale === 'sr');
     }
 }

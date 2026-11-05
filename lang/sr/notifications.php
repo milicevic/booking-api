@@ -68,6 +68,14 @@ return [
         'salutation' => 'Booking App',
     ],
 
+    'verify_email' => [
+        'subject' => 'Potvrdite email adresu za :app_name',
+        'greeting' => 'Zdravo, :name!',
+        'line1' => 'Kliknite na dugme ispod da potvrdite email adresu i aktivirate nalog za **:app_name**.',
+        'action' => 'Potvrdi email',
+        'line2' => 'Link važi :hours sati. Ako niste vi napravili nalog, slobodno ignorišite ovaj mejl.',
+    ],
+
     'welcome_client' => [
         'subject' => 'Dobrodošli u :app_name!',
         'greeting' => 'Zdravo, :name!',

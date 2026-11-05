@@ -12,10 +12,12 @@
         "laravel-notification-channels/webpush": "^13.0",
         "laravel/framework": "^13.38",
         "laravel/sanctum": "^4.3",
+        "laravel/socialite": "^5.31",
         "laravel/tinker": "^3.0",
         "resend/resend-laravel": "^1.7"
     },
     "require-dev": {
+        "larastan/larastan": "^3.14",
         "laravel/boost": "^2.10",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.1.5",

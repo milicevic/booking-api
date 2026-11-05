@@ -3,32 +3,32 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MessageResource;
+use App\Http\Resources\NotificationResource;
+use App\Services\Contracts\UserNotificationServiceInterface;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class NotificationController extends Controller
 {
-    /** Authenticated user — lista notifikacija */
-    public function index(Request $request)
-    {
-        $notifications = $request->user()->notifications()->latest()->get();
+    public function __construct(private readonly UserNotificationServiceInterface $notifications) {}
 
-        return response()->json($notifications);
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        return NotificationResource::collection($this->notifications->list($request->user()));
     }
 
-    /** Authenticated user — označi notifikaciju kao pročitanu */
-    public function markRead(Request $request, string $id)
+    public function markRead(Request $request, string $id): MessageResource
     {
-        $notification = $request->user()->notifications()->findOrFail($id);
-        $notification->markAsRead();
+        $this->notifications->markRead($request->user(), $id);
 
-        return response()->json(['message' => __('messages.notification_read')]);
+        return MessageResource::make(__('messages.notification_read'));
     }
 
-    /** Authenticated user — označi sve notifikacije kao pročitane */
-    public function markAllRead(Request $request)
+    public function markAllRead(Request $request): MessageResource
     {
-        $request->user()->unreadNotifications()->update(['read_at' => now()]);
+        $this->notifications->markAllRead($request->user());
 
-        return response()->json(['message' => __('messages.notifications_all_read')]);
+        return MessageResource::make(__('messages.notifications_all_read'));
     }
 }

@@ -3,127 +3,59 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Service;
+use App\Http\Requests\Slot\AvailableSlotsRequest;
+use App\Http\Requests\Slot\BookableTimesRequest;
+use App\Http\Requests\Slot\StoreSlotRequest;
+use App\Http\Resources\SlotResource;
 use App\Models\Slot;
-use App\Models\User;
+use App\Services\Contracts\SlotServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 
 class SlotController extends Controller
 {
-    // Javna ruta — korisnik vidi slobodne slotove
-    public function available(Request $request)
+    public function __construct(private readonly SlotServiceInterface $slots) {}
+
+    /** Javno — slobodni termini */
+    public function available(AvailableSlotsRequest $request): AnonymousResourceCollection
     {
-        $request->validate([
-            'date' => 'sometimes|date',
-            'worker_id' => 'sometimes|exists:users,id',
-            'service_id' => 'sometimes|exists:services,id',
-        ]);
+        /** @var array{date?: ?string, worker_id?: int|string|null, service_id?: int|string|null} $filters */
+        $filters = $request->validated();
 
-        $slots = Slot::with(['worker', 'worker.services' => fn ($q) => $q->where('is_active', true)])
-            ->where('is_available', true)
-            ->where(fn ($q) => $q
-                ->whereDate('date', '>', today())
-                ->orWhere(fn ($today) => $today
-                    ->whereDate('date', today())
-                    ->where('start_time', '>', now()->format('H:i:s'))))
-            ->when($request->date, fn ($q) => $q->whereDate('date', $request->date))
-            ->when($request->worker_id, fn ($q) => $q->where('worker_id', $request->worker_id))
-            ->when($request->service_id, fn ($q) => $q->whereHas(
-                'worker.services',
-                fn ($s) => $s->where('services.id', $request->service_id)->where('services.is_active', true)
-            ))
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get();
-
-        return response()->json($slots);
+        return SlotResource::collection($this->slots->availableForPublic($filters));
     }
 
-    /**
-     * Javno — vremena u koja kupac može da zakaže kod radnika, prema trajanju izabrane usluge.
-     */
-    public function times(Request $request): JsonResponse
+    /** Javno — vremena u koja kupac može da zakaže kod radnika, prema trajanju izabrane usluge */
+    public function times(BookableTimesRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'worker_id' => 'required|integer|exists:users,id',
-            'service_id' => 'nullable|integer|exists:services,id',
-            'date' => 'nullable|date',
-        ]);
-
-        $duration = null;
-        if (! empty($data['service_id'])) {
-            $service = Service::where('id', $data['service_id'])
-                ->where('is_active', true)
-                ->whereHas('workers', fn ($q) => $q->where('users.id', $data['worker_id']))
-                ->first();
-
-            abort_if(! $service, 422, __('messages.service_unavailable_for_worker'));
-            $duration = $service->duration_minutes;
-        }
-
-        return response()->json(Slot::bookableTimes((int) $data['worker_id'], $duration, $data['date'] ?? null));
+        return response()->json($this->slots->bookableTimes(
+            $request->integer('worker_id'),
+            $request->filled('service_id') ? $request->integer('service_id') : null,
+            $request->filled('date') ? $request->string('date')->toString() : null,
+        ));
     }
 
-    // Admin/Worker rute
-    public function index(Request $request)
+    public function index(Request $request): AnonymousResourceCollection
     {
-        if ($request->user()->role === 'admin' && $request->client_id) {
-            $workerIds = User::where('client_id', $request->client_id)->where('role', 'worker')->pluck('id');
-
-            $slots = Slot::with('worker', 'booking')
-                ->whereIn('worker_id', $workerIds)
-                ->orderBy('date')
-                ->orderBy('start_time')
-                ->get();
-
-            return response()->json($slots);
-        }
-
-        if ($request->user()->role === 'worker') {
-            $slots = Slot::with('worker', 'booking')
-                ->where('worker_id', $request->user()->id)
-                ->orderBy('date')
-                ->orderBy('start_time')
-                ->get();
-
-            return response()->json($slots);
-        }
-
-        $workerIds = $request->user()->workers()->pluck('id');
-
-        $slots = Slot::with('worker', 'booking')
-            ->whereIn('worker_id', $workerIds)
-            ->orderBy('date')
-            ->orderBy('start_time')
-            ->get();
-
-        return response()->json($slots);
+        return SlotResource::collection(
+            $this->slots->listFor($request->user(), $request->integer('client_id') ?: null)
+        );
     }
 
-    public function store(Request $request)
+    public function store(StoreSlotRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'worker_id' => 'required|exists:users,id',
-            'date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-        ]);
-
-        $worker = User::findOrFail($data['worker_id']);
-        if ($request->user()->role !== 'admin') {
-            abort_if($worker->client_id !== $request->user()->id, 403);
-        }
-
-        $slot = Slot::create($data);
-
-        return response()->json($slot, 201);
+        return SlotResource::make($this->slots->create($request->slotData()))
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function destroy(Request $request, Slot $slot)
+    public function destroy(Slot $slot): JsonResponse
     {
-        abort_if($slot->worker->client_id !== $request->user()->id, 403);
-        $slot->delete();
+        Gate::authorize('delete', $slot);
+
+        $this->slots->delete($slot);
 
         return response()->json(null, 204);
     }

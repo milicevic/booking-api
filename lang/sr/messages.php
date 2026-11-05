@@ -4,6 +4,8 @@ return [
     // Auth
     'wrong_credentials' => 'Pogrešni podaci.',
     'account_suspended' => 'Nalog je suspendovan.',
+    'email_not_verified' => 'Potvrdite email adresu. Link smo vam poslali pri registraciji.',
+    'verification_sent' => 'Ako nalog postoji i još nije potvrđen, poslali smo novi link za potvrdu.',
     'logged_out' => 'Odjavljen.',
     'invalid_invite_token' => 'Nevažeći ili istekli token za poziv.',
 

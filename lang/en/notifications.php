@@ -68,6 +68,14 @@ return [
         'salutation' => 'Booking App',
     ],
 
+    'verify_email' => [
+        'subject' => 'Confirm your email for :app_name',
+        'greeting' => 'Hello, :name!',
+        'line1' => 'Click the button below to confirm your email address and activate your **:app_name** account.',
+        'action' => 'Confirm email',
+        'line2' => 'The link is valid for :hours hours. If you did not create an account, you can ignore this email.',
+    ],
+
     'welcome_client' => [
         'subject' => 'Welcome to :app_name!',
         'greeting' => 'Hello, :name!',

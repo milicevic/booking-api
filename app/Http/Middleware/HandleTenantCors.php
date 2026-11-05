@@ -2,13 +2,15 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Tenant;
+use App\Repositories\Contracts\TenantRepositoryInterface;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class HandleTenantCors
 {
+    public function __construct(private readonly TenantRepositoryInterface $tenants) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         $origin = $request->header('Origin');
@@ -52,22 +54,14 @@ class HandleTenantCors
         }
 
         // Glavni FE domen (Vercel ili custom) — dozvoljen bez tenant provjere
-        $allowedOrigins = array_filter(explode(',', env('CORS_ALLOWED_ORIGINS', '')));
+        $allowedOrigins = array_filter(explode(',', (string) config('app.cors_allowed_origins')));
         foreach ($allowedOrigins as $allowed) {
             if (parse_url(trim($allowed), PHP_URL_HOST) === $host) {
                 return true;
             }
         }
 
-        // Platforma domen (npr. salon-a.slotres.click)
-        $platformHost = env('PLATFORM_HOST', '');
-        if ($platformHost && str_ends_with($host, '.'.$platformHost)) {
-            $subdomain = substr($host, 0, -(strlen($platformHost) + 1));
-
-            return Tenant::where('subdomain', $subdomain)->exists();
-        }
-
-        // Custom domena klijenta (npr. rezervacije.moj-salon.com)
-        return Tenant::where('custom_domain', $host)->exists();
+        // Sajt firme: poddomen platforme (salon-a.slotres.click) ili custom domen (rezervacije.moj-salon.com)
+        return $this->tenants->findByHost($host) !== null;
     }
 }

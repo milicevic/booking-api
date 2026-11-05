@@ -3,47 +3,33 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Notifications\WelcomeClient;
+use App\Http\Requests\Register\RegisterRequest;
+use App\Http\Requests\Register\SubdomainPreviewRequest;
+use App\Http\Resources\TenantResource;
+use App\Http\Resources\UserResource;
+use App\Services\Contracts\SubdomainGeneratorInterface;
+use App\Services\Contracts\TenantRegistrationServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class RegisterController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function store(RegisterRequest $request, TenantRegistrationServiceInterface $registration): JsonResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
-            'app_name' => ['required', 'string', 'max:255'],
-            'subdomain' => ['nullable', 'string', 'alpha_dash', 'max:63', 'unique:tenants,subdomain', Rule::notIn(Tenant::RESERVED_SUBDOMAINS)],
-        ]);
-
-        [$tenant, $user] = Tenant::createWithClient($data, $data);
-        $token = $user->createToken('api-token')->plainTextToken;
-
-        $user->notify(new WelcomeClient($tenant));
+        /** @var array{name: string, email: string, password: string, app_name: string, subdomain?: string|null} $data */
+        $data = $request->validated();
+        [$tenant, $user] = $registration->register($data);
 
         return response()->json([
-            'token' => $token,
-            'tenant' => $tenant,
-            'user' => $user,
+            'tenant' => TenantResource::make($tenant),
+            'user' => UserResource::make($user),
         ], 201);
     }
 
-    /**
-     * Prikazuje adresu (poddomen) koju će firma dobiti, dok korisnik kuca naziv na registraciji.
-     */
-    public function subdomainPreview(Request $request): JsonResponse
+    /** Adresa (poddomen) koju će firma dobiti, dok korisnik kuca naziv na registraciji. */
+    public function subdomainPreview(SubdomainPreviewRequest $request, SubdomainGeneratorInterface $subdomains): JsonResponse
     {
-        $data = $request->validate([
-            'app_name' => ['required', 'string', 'max:255'],
-        ]);
-
         return response()->json([
-            'subdomain' => Tenant::uniqueSubdomainFor($data['app_name']),
+            'subdomain' => $subdomains->uniqueFor($request->string('app_name')->toString()),
         ]);
     }
 }

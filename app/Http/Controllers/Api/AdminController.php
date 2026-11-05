@@ -3,30 +3,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Services\Contracts\ClientServiceInterface;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 
 class AdminController extends Controller
 {
-    public function clients(Request $request)
+    public function __construct(private readonly ClientServiceInterface $clients) {}
+
+    public function clients(): AnonymousResourceCollection
     {
-        abort_if($request->user()->role !== 'admin', 403);
+        Gate::authorize('viewAnyClients', User::class);
 
-        $clients = User::where('role', 'client')
-            ->with('clientProfile')
-            ->withCount('workers')
-            ->get();
-
-        return response()->json($clients);
+        return UserResource::collection($this->clients->allClients());
     }
 
-    public function suspendClient(Request $request, User $client)
+    public function suspendClient(User $client): UserResource
     {
-        abort_if($request->user()->role !== 'admin', 403);
-        abort_if($client->role !== 'client', 422);
+        Gate::authorize('suspend', $client);
 
-        $client->update(['is_suspended' => !$client->is_suspended]);
-
-        return response()->json($client->fresh());
+        return UserResource::make($this->clients->toggleSuspension($client));
     }
 }

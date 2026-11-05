@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Onboarding;
 
+use App\Enums\DeployStatus;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,7 +18,7 @@ class DeployRequestTest extends TestCase
         $response = $this->actingAs($client)->postJson('/api/client/deploy-request');
 
         $response->assertOk();
-        $this->assertSame('pending_deploy', $this->tenant->fresh()->deploy_status);
+        $this->assertSame(DeployStatus::PendingDeploy, $this->tenant->fresh()->deploy_status);
     }
 
     public function test_client_can_set_subdomain_in_deploy_request(): void

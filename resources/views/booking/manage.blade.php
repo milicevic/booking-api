@@ -206,8 +206,8 @@
                     </div>
                 @endif
 
-                <span class="status-badge status-{{ $booking->status }}">
-                    {{ __("manage.status.{$booking->status}") }}
+                <span class="status-badge status-{{ $booking->status->value }}">
+                    {{ __("manage.status.{$booking->status->value}") }}
                 </span>
 
                 <div class="detail-row">
@@ -254,7 +254,7 @@
             </div>
 
             <div class="card-footer">
-                @if(in_array($booking->status, ['confirmed', 'pending']))
+                @if($booking->status->isActive())
                     <form method="POST" action="{{ route('booking.cancel', $booking->token) }}"
                           onsubmit="return confirm(@js(__('manage.cancel_confirm')))">
                         @csrf
@@ -264,7 +264,7 @@
                     </form>
                 @else
                     <div class="cancelled-notice">
-                        {{ __("manage.status_notice.{$booking->status}") }}
+                        {{ __("manage.status_notice.{$booking->status->value}") }}
                     </div>
                 @endif
             </div>

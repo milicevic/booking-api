@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Onboarding;
 
+use App\Enums\SubscriptionStatus;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\VerifyEmailAddress;
 use App\Notifications\WelcomeClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -30,7 +32,8 @@ class RegisterTenantTest extends TestCase
         $response = $this->postJson('/api/register', $this->validPayload());
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['token', 'tenant', 'user']);
+            ->assertJsonStructure(['tenant', 'user'])
+            ->assertJsonMissingPath('token');
 
         $this->assertDatabaseHas('tenants', ['app_name' => 'Moj Salon']);
         $this->assertDatabaseHas('users', ['email' => 'ana@salon.com', 'role' => 'client']);
@@ -43,7 +46,7 @@ class RegisterTenantTest extends TestCase
         $this->postJson('/api/register', $this->validPayload());
 
         $tenant = Tenant::where('app_name', 'Moj Salon')->firstOrFail();
-        $this->assertSame('trialing', $tenant->subscription_status);
+        $this->assertSame(SubscriptionStatus::Trialing, $tenant->subscription_status);
         $this->assertNotNull($tenant->trial_ends_at);
         $this->assertTrue($tenant->trial_ends_at->isAfter(now()->addDays(6)));
     }
@@ -91,23 +94,30 @@ class RegisterTenantTest extends TestCase
         $this->assertDatabaseHas('tenants', ['subdomain' => 'moj-frizerski']);
     }
 
-    public function test_returns_token_for_immediate_login(): void
-    {
-        Notification::fake();
-
-        $response = $this->postJson('/api/register', $this->validPayload());
-
-        $this->assertNotEmpty($response->json('token'));
-    }
-
-    public function test_sends_welcome_mail_to_client(): void
+    public function test_new_account_must_confirm_email_before_login(): void
     {
         Notification::fake();
 
         $this->postJson('/api/register', $this->validPayload());
 
         $user = User::withoutGlobalScopes()->where('email', 'ana@salon.com')->firstOrFail();
-        Notification::assertSentTo($user, WelcomeClient::class);
+        $this->assertNull($user->email_verified_at);
+        $this->assertSame(0, $user->tokens()->count());
+
+        $this->postJson('/api/auth/login', ['email' => 'ana@salon.com', 'password' => 'tajna1234'])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'email_not_verified');
+    }
+
+    public function test_sends_verification_mail_and_welcome_only_after_confirmation(): void
+    {
+        Notification::fake();
+
+        $this->postJson('/api/register', $this->validPayload());
+
+        $user = User::withoutGlobalScopes()->where('email', 'ana@salon.com')->firstOrFail();
+        Notification::assertSentTo($user, VerifyEmailAddress::class);
+        Notification::assertNotSentTo($user, WelcomeClient::class);
     }
 
     public function test_returns_422_when_email_already_taken(): void

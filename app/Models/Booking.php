@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BookingStatus;
 use App\Models\Concerns\BelongsToTenant;
 use Database\Factories\BookingFactory;
 use Illuminate\Contracts\Translation\HasLocalePreference;
@@ -12,6 +13,24 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
+/**
+ * @property int $id
+ * @property int $slot_id
+ * @property ?int $service_id
+ * @property ?int $tenant_id
+ * @property string $start_time
+ * @property string $end_time
+ * @property string $customer_name
+ * @property ?string $customer_email
+ * @property ?string $customer_phone
+ * @property string $token
+ * @property BookingStatus $status
+ * @property ?string $note
+ * @property ?string $locale
+ * @property-read Slot $slot
+ * @property-read ?Service $service
+ * @property-read ?Tenant $tenant
+ */
 class Booking extends Model implements HasLocalePreference
 {
     /** @use HasFactory<BookingFactory> */
@@ -32,13 +51,17 @@ class Booking extends Model implements HasLocalePreference
         'locale',
     ];
 
-    /** Statusi rezervacija koje zauzimaju vreme radnika. */
-    public const ACTIVE_STATUSES = ['pending', 'confirmed'];
+    protected function casts(): array
+    {
+        return [
+            'status' => BookingStatus::class,
+        ];
+    }
 
     /** Stranica na sajtu firme na kojoj kupac vidi i otkazuje rezervaciju. */
     public function manageUrl(): string
     {
-        $tenant = $this->tenant ?? $this->slot?->worker?->tenant;
+        $tenant = $this->tenant ?? $this->slot->worker->tenant;
 
         return $tenant
             ? $tenant->siteUrl("/manage/{$this->token}")
@@ -63,16 +86,25 @@ class Booking extends Model implements HasLocalePreference
         });
     }
 
+    /**
+     * @return BelongsTo<Slot, $this>
+     */
     public function slot(): BelongsTo
     {
         return $this->belongsTo(Slot::class);
     }
 
+    /**
+     * @return BelongsTo<Service, $this>
+     */
     public function service(): BelongsTo
     {
         return $this->belongsTo(Service::class);
     }
 
+    /**
+     * @return BelongsTo<Tenant, $this>
+     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);

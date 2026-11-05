@@ -9,6 +9,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @property int $id
+ * @property ?int $tenant_id
+ * @property string $name
+ * @property int $duration_minutes
+ * @property ?string $price
+ * @property bool $is_active
+ * @property-read ?Tenant $tenant
+ */
 class Service extends Model
 {
     /** @use HasFactory<ServiceFactory> */
@@ -22,6 +31,9 @@ class Service extends Model
         'is_active',
     ];
 
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
@@ -30,11 +42,17 @@ class Service extends Model
         ];
     }
 
+    /**
+     * @return BelongsToMany<User, $this>
+     */
     public function workers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'worker_services', 'service_id', 'worker_id');
     }
 
+    /**
+     * @return BelongsTo<Tenant, $this>
+     */
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
@@ -52,7 +70,7 @@ class Service extends Model
         $price = (float) $this->price;
         $decimals = floor($price) == $price ? 0 : 2;
         [$decimalSeparator, $thousandsSeparator] = app()->getLocale() === 'sr' ? [',', '.'] : ['.', ','];
-        $currency = $this->tenant?->currency ?? 'RSD';
+        $currency = $this->tenant->currency ?? 'RSD';
 
         return "{$this->name} (".number_format($price, $decimals, $decimalSeparator, $thousandsSeparator)." {$currency})";
     }

@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PushController;
 use App\Http\Controllers\Api\RegisterController;
@@ -18,6 +20,12 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [RegisterController::class, 'store']);
 Route::get('/register/subdomain-preview', [RegisterController::class, 'subdomainPreview'])->middleware('throttle:60,1');
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect']);
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
+Route::get('/auth/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+    ->whereNumber('id')
+    ->name('verification.verify');
+Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:6,1');
 Route::get('/push/vapid-public-key', [PushController::class, 'vapidPublicKey']);
 Route::get('/bookings/{token}/confirm-by-link', [BookingController::class, 'confirmByLink'])
     ->name('bookings.confirm-by-link');

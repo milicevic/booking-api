@@ -14,6 +14,9 @@ class BookingRejectedCustomer extends Notification
         private Booking $booking
     ) {}
 
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         $channels = [WebPushChannel::class];
@@ -47,7 +50,6 @@ class BookingRejectedCustomer extends Notification
         $t = 'notifications.booking_rejected_customer';
 
         return (new MailMessage)
-            ->theme('green')
             ->subject(__("{$t}.subject"))
             ->greeting(__("{$t}.greeting", ['name' => $this->booking->customer_name]))
             ->line(__("{$t}.line1"))

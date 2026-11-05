@@ -3,112 +3,64 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Service\StoreServiceRequest;
+use App\Http\Requests\Service\UpdateServiceRequest;
+use App\Http\Resources\MessageResource;
+use App\Http\Resources\ServiceResource;
 use App\Models\Service;
 use App\Models\User;
+use App\Services\Contracts\ServiceCatalogServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 
 class ServiceController extends Controller
 {
-    /**
-     * List all services for the tenant.
-     * Optional ?worker_id=X to filter services assigned to that worker.
-     */
-    public function index(Request $request): JsonResponse
+    public function __construct(private readonly ServiceCatalogServiceInterface $catalog) {}
+
+    /** Usluge firme; opciono ?worker_id=X za usluge koje radi taj radnik. */
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Service::query();
-
-        if ($request->worker_id) {
-            $query->whereHas('workers', fn ($q) => $q->where('users.id', $request->worker_id));
-        }
-
-        return response()->json($query->with(['workers' => fn ($q) => $q->select('users.id', 'users.name')])->get());
+        return ServiceResource::collection($this->catalog->list($request->integer('worker_id') ?: null));
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreServiceRequest $request): JsonResponse
     {
-        abort_if(! in_array($request->user()->role, ['client', 'admin']), 403);
-
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'duration_minutes' => 'required|integer|min:1',
-            'price' => 'nullable|numeric|min:0',
-            'is_active' => 'sometimes|boolean',
-        ]);
-
-        $service = Service::create($data);
-
-        // Podrazumevano uslugu rade svi radnici; vlasnik posle može da isključi pojedine
-        $service->workers()->sync(
-            User::withoutGlobalScopes()->where('tenant_id', $service->tenant_id)->where('role', 'worker')->pluck('id')
-        );
-
-        return response()->json($service->load(['workers' => fn ($q) => $q->select('users.id', 'users.name')]), 201);
+        return ServiceResource::make($this->catalog->create($request->validated()))
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function update(Request $request, Service $service): JsonResponse
+    public function update(UpdateServiceRequest $request, Service $service): ServiceResource
     {
-        abort_if(! in_array($request->user()->role, ['client', 'admin']), 403);
-
-        $data = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'duration_minutes' => 'sometimes|integer|min:1',
-            'price' => 'nullable|numeric|min:0',
-            'is_active' => 'sometimes|boolean',
-        ]);
-
-        $service->update($data);
-
-        return response()->json($service->fresh());
+        return ServiceResource::make($this->catalog->update($service, $request->validated()));
     }
 
-    public function destroy(Request $request, Service $service): JsonResponse
+    public function destroy(Service $service): JsonResponse
     {
-        abort_if(! in_array($request->user()->role, ['client', 'admin']), 403);
+        Gate::authorize('delete', $service);
 
-        $service->delete();
+        $this->catalog->delete($service);
 
         return response()->json(null, 204);
     }
 
-    /**
-     * Assign a service to a worker (client/admin only).
-     */
-    public function assignWorker(Request $request, Service $service, User $worker): JsonResponse
+    public function assignWorker(Service $service, User $worker): MessageResource
     {
-        abort_if(! in_array($request->user()->role, ['client', 'admin']), 403);
-        $this->authorizeWorkerAccess($request->user(), $worker);
+        Gate::authorize('manageWorker', [$service, $worker]);
 
-        $service->workers()->syncWithoutDetaching([$worker->id]);
+        $this->catalog->assignWorker($service, $worker);
 
-        return response()->json(['message' => __('messages.service_assigned')]);
+        return MessageResource::make(__('messages.service_assigned'));
     }
 
-    /**
-     * Remove a service from a worker (client/admin only).
-     */
-    public function unassignWorker(Request $request, Service $service, User $worker): JsonResponse
+    public function unassignWorker(Service $service, User $worker): JsonResponse
     {
-        abort_if(! in_array($request->user()->role, ['client', 'admin']), 403);
-        $this->authorizeWorkerAccess($request->user(), $worker);
+        Gate::authorize('manageWorker', [$service, $worker]);
 
-        $service->workers()->detach($worker->id);
+        $this->catalog->unassignWorker($service, $worker);
 
         return response()->json(null, 204);
-    }
-
-    /**
-     * Ensure the authenticated client owns the worker.
-     * Admin can access any worker within the tenant.
-     */
-    private function authorizeWorkerAccess(User $user, User $worker): void
-    {
-        abort_if($worker->role !== 'worker', 422);
-
-        if ($user->role === 'admin') {
-            return;
-        }
-
-        abort_if($worker->client_id !== $user->id, 403);
     }
 }

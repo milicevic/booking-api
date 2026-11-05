@@ -3,111 +3,56 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Service;
+use App\Http\Requests\Worker\StoreWorkerRequest;
+use App\Http\Requests\Worker\UpdateWorkerRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
-use App\Models\WorkerProfile;
-use App\Notifications\WorkerInvite;
+use App\Services\Contracts\WorkerServiceInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 
 class WorkerController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(private readonly WorkerServiceInterface $workers) {}
+
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $clientId = $request->user()->role === 'admin' && $request->client_id
-            ? $request->client_id
-            : $request->user()->id;
-
-        $workers = User::where('client_id', $clientId)
-            ->where('role', 'worker')
-            ->with('workerProfile')
-            ->get();
-
-        return response()->json($workers);
+        return UserResource::collection($this->workers->listFor($request->user(), $request->integer('client_id') ?: null));
     }
 
-    public function store(Request $request)
+    public function store(StoreWorkerRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'nullable|email|unique:users,email',
-            'phone' => 'nullable|string',
-        ]);
+        /** @var array{name: string, email?: ?string, phone?: ?string} $data */
+        $data = $request->validated();
 
-        $inviteToken = ! empty($data['email']) ? Str::uuid()->toString() : null;
-
-        $worker = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'] ?? null,
-            'role' => 'worker',
-            'client_id' => $request->user()->id,
-            'invite_token' => $inviteToken,
-        ]);
-
-        WorkerProfile::create([
-            'user_id' => $worker->id,
-            'phone' => $data['phone'] ?? null,
-        ]);
-
-        // Novi radnik podrazumevano radi sve aktivne usluge firme
-        $worker->services()->sync(Service::where('is_active', true)->pluck('id'));
-
-        if ($inviteToken) {
-            $tenant = app('current_tenant');
-            $worker->notify(new WorkerInvite($tenant, $inviteToken));
-        }
-
-        return response()->json($worker->load('workerProfile'), 201);
+        return UserResource::make($this->workers->create($request->user(), $data))
+            ->response()
+            ->setStatusCode(201);
     }
 
-    public function show(Request $request, User $worker)
+    public function show(User $worker): UserResource
     {
-        $this->authorizeOwnership($request->user(), $worker);
+        Gate::authorize('view', $worker);
 
-        return response()->json($worker->load('workerProfile'));
+        return UserResource::make($worker->load('workerProfile'));
     }
 
-    public function update(Request $request, User $worker)
+    public function update(UpdateWorkerRequest $request, User $worker): UserResource
     {
-        $this->authorizeOwnership($request->user(), $worker);
+        /** @var array{name?: string, email?: ?string, phone?: ?string, can_edit_slots?: bool} $data */
+        $data = $request->validated();
 
-        $data = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'nullable|email|unique:users,email,'.$worker->id,
-            'phone' => 'nullable|string',
-            'can_edit_slots' => 'sometimes|boolean',
-        ]);
-
-        $worker->update(array_filter([
-            'name' => $data['name'] ?? null,
-            'email' => array_key_exists('email', $data) ? $data['email'] : $worker->email,
-            'can_edit_slots' => $data['can_edit_slots'] ?? null,
-        ], fn ($value) => $value !== null));
-
-        if (array_key_exists('phone', $data)) {
-            $worker->workerProfile()->updateOrCreate(
-                ['user_id' => $worker->id],
-                ['phone' => $data['phone']]
-            );
-        }
-
-        return response()->json($worker->fresh()->load('workerProfile'));
+        return UserResource::make($this->workers->update($worker, $data));
     }
 
-    public function destroy(Request $request, User $worker)
+    public function destroy(User $worker): JsonResponse
     {
-        $this->authorizeOwnership($request->user(), $worker);
-        $worker->delete();
+        Gate::authorize('delete', $worker);
+
+        $this->workers->delete($worker);
 
         return response()->json(null, 204);
-    }
-
-    private function authorizeOwnership(User $client, User $worker): void
-    {
-        if ($client->role === 'admin') {
-            return;
-        }
-
-        abort_if($worker->client_id !== $client->id, 403);
     }
 }

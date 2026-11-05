@@ -3,82 +3,53 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Http\Requests\Auth\AcceptInviteRequest;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Resources\MessageResource;
+use App\Http\Resources\UserResource;
+use App\Services\Contracts\AuthServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+    public function __construct(private readonly AuthServiceInterface $auth) {}
+
+    public function login(LoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        $user = User::withoutGlobalScopes()->where('email', $request->email)->first();
-
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => __('messages.wrong_credentials')], 401);
-        }
-
-        if ($user->is_suspended) {
-            return response()->json(['message' => __('messages.account_suspended')], 403);
-        }
-
-        $isPlatformUser = in_array($user->role, ['superadmin', 'admin']);
-        $currentTenant = app()->bound('current_tenant') ? app('current_tenant') : null;
-
-        if (! $isPlatformUser && $currentTenant && $user->tenant_id !== $currentTenant->id) {
-            return response()->json(['message' => __('messages.wrong_credentials')], 401);
-        }
-
-        $token = $user->createToken('api-token')->plainTextToken;
+        $session = $this->auth->login(
+            $request->string('email')->toString(),
+            $request->string('password')->toString(),
+        );
 
         return response()->json([
-            'token' => $token,
-            'client' => $user,
+            'token' => $session['token'],
+            'client' => UserResource::make($session['user']),
         ]);
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): MessageResource
     {
-        $request->user()->currentAccessToken()->delete();
+        $this->auth->logout($request->user());
 
-        return response()->json(['message' => __('messages.logged_out')]);
+        return MessageResource::make(__('messages.logged_out'));
     }
 
-    public function me(Request $request)
+    public function me(Request $request): UserResource
     {
-        return response()->json($request->user()->load('clientProfile'));
+        return UserResource::make($request->user()->load('clientProfile'));
     }
 
-    public function acceptInvite(Request $request): JsonResponse
+    public function acceptInvite(AcceptInviteRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'invite_token' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:8'],
-        ]);
-
-        /** @var User|null $worker */
-        $worker = User::withoutGlobalScopes()
-            ->where('invite_token', $data['invite_token'])
-            ->where('role', 'worker')
-            ->first();
-
-        abort_if(! $worker, 404, __('messages.invalid_invite_token'));
-
-        $worker->update([
-            'password' => $data['password'],
-            'invite_token' => null,
-        ]);
-
-        $token = $worker->createToken('api-token')->plainTextToken;
+        $session = $this->auth->acceptInvite(
+            $request->string('invite_token')->toString(),
+            $request->string('password')->toString(),
+        );
 
         return response()->json([
-            'token' => $token,
-            'user' => $worker->fresh(),
+            'token' => $session['token'],
+            'user' => UserResource::make($session['user']),
         ]);
     }
 }

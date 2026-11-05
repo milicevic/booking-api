@@ -3,52 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use App\Http\Requests\Client\DeployRequest;
+use App\Http\Requests\Client\UpdateSettingsRequest;
+use App\Http\Resources\TenantResource;
+use App\Http\Resources\UserResource;
+use App\Services\Contracts\ClientServiceInterface;
+use App\Services\Contracts\CurrentTenantInterface;
+use App\Services\Contracts\TenantServiceInterface;
 
 class ClientController extends Controller
 {
     /** Ažurira podešavanja klijentskog profila */
-    public function updateSettings(Request $request): JsonResponse
+    public function updateSettings(UpdateSettingsRequest $request, ClientServiceInterface $clients): UserResource
     {
-        $data = $request->validate([
-            'auto_confirm_bookings' => 'sometimes|boolean',
-        ]);
+        /** @var array{auto_confirm_bookings?: bool} $settings */
+        $settings = $request->validated();
 
-        $request->user()->clientProfile()->updateOrCreate(
-            ['user_id' => $request->user()->id],
-            $data
-        );
-
-        return response()->json($request->user()->fresh()->load('clientProfile'));
+        return UserResource::make($clients->updateSettings($request->user(), $settings));
     }
 
     /** Klijent šalje zahtev za deploy (subdomena ili custom domena) */
-    public function deployRequest(Request $request): JsonResponse
+    public function deployRequest(DeployRequest $request, TenantServiceInterface $tenants, CurrentTenantInterface $currentTenant): TenantResource
     {
-        abort_if($request->user()->role !== 'client', 403);
+        /** @var array{subdomain?: ?string, custom_domain?: ?string} $data */
+        $data = $request->validated();
 
-        $data = $request->validate([
-            'subdomain' => ['nullable', 'string', 'alpha_dash', 'max:63', Rule::unique('tenants', 'subdomain')->ignore(app('current_tenant')->id), Rule::notIn(Tenant::RESERVED_SUBDOMAINS)],
-            'custom_domain' => ['nullable', 'string', 'max:253'],
-        ]);
-
-        $tenant = app('current_tenant');
-
-        $updates = ['deploy_status' => 'pending_deploy'];
-
-        if (! empty($data['subdomain'])) {
-            $updates['subdomain'] = $data['subdomain'];
-        }
-
-        if (! empty($data['custom_domain'])) {
-            $updates['custom_domain'] = $data['custom_domain'];
-        }
-
-        $tenant->update($updates);
-
-        return response()->json($tenant->fresh());
+        return TenantResource::make($tenants->requestDeploy($currentTenant->require(), $data));
     }
 }

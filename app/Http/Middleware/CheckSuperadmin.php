@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +16,7 @@ class CheckSuperadmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user() || $request->user()->role !== 'superadmin') {
+        if (! $request->user() || $request->user()->role !== UserRole::Superadmin) {
             return response()->json(['message' => __('http.403')], Response::HTTP_FORBIDDEN);
         }
 

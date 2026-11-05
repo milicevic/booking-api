@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Superadmin;
 
+use App\Enums\UserRole;
 use App\Models\Booking;
 use App\Models\Service;
 use App\Models\Slot;
@@ -50,7 +51,7 @@ class TenantManagementTest extends TestCase
 
         $tenant = Tenant::where('subdomain', 'salon-ana')->firstOrFail();
         $client = User::withoutGlobalScopes()->where('email', 'ana@salon.com')->firstOrFail();
-        $this->assertSame('client', $client->role);
+        $this->assertSame(UserRole::Client, $client->role);
         $this->assertSame($tenant->id, $client->tenant_id);
         Notification::assertSentTo($client, WelcomeClient::class);
     }

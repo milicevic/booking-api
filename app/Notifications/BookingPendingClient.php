@@ -15,6 +15,9 @@ class BookingPendingClient extends Notification
         private Booking $booking
     ) {}
 
+    /**
+     * @return list<string>
+     */
     public function via(object $notifiable): array
     {
         return ['mail', 'database', WebPushChannel::class];
@@ -74,7 +77,6 @@ class BookingPendingClient extends Notification
         $contact = $this->booking->customer_phone ?? $this->booking->customer_email ?? '—';
 
         $mail = (new MailMessage)
-            ->theme('green')
             ->subject(__("{$t}.subject", ['name' => $this->booking->customer_name]))
             ->greeting(__("{$t}.greeting"))
             ->line(__("{$t}.line"))

@@ -212,7 +212,7 @@ class BookingStoreTest extends TestCase
         ClientProfile::factory()->create(['user_id' => $client->id]);
         $worker = User::factory()->worker($client->id)->create(['tenant_id' => $this->tenant->id]);
         $slot = Slot::factory()->create(['worker_id' => $worker->id, 'tenant_id' => $this->tenant->id, 'is_available' => true]);
-        $service = Service::factory()->create(['tenant_id' => $this->tenant->id, 'is_active' => true]);
+        $service = Service::factory()->create(['tenant_id' => $this->tenant->id, 'is_active' => true, 'duration_minutes' => 30]);
         $worker->services()->attach($service->id);
 
         $response = $this->postJson('/api/bookings', [
@@ -256,7 +256,7 @@ class BookingStoreTest extends TestCase
         ClientProfile::factory()->create(['user_id' => $client->id]);
         $worker = User::factory()->worker($client->id)->create(['tenant_id' => $this->tenant->id]);
         $slot = Slot::factory()->create(['worker_id' => $worker->id, 'is_available' => true]);
-        $service = Service::factory()->create(['name' => 'Šišanje', 'price' => 1200]);
+        $service = Service::factory()->create(['name' => 'Šišanje', 'price' => 1200, 'duration_minutes' => 30]);
         $worker->services()->attach($service->id);
 
         $token = $this->postJson('/api/bookings', [

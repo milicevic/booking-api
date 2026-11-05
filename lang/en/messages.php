@@ -4,6 +4,8 @@ return [
     // Auth
     'wrong_credentials' => 'Invalid credentials.',
     'account_suspended' => 'Account is suspended.',
+    'email_not_verified' => 'Please confirm your email address. We sent you a link when you registered.',
+    'verification_sent' => 'If the account exists and is not confirmed yet, we sent a new confirmation link.',
     'logged_out' => 'Logged out.',
     'invalid_invite_token' => 'Invalid or expired invite token.',
 
