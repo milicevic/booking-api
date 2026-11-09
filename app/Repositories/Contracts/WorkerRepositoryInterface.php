@@ -27,6 +27,7 @@ interface WorkerRepositoryInterface
      * Kreira radnika zajedno sa profilom.
      *
      * @param  array{name: string, email: ?string, client_id: int, invite_token: ?string}  $attributes
+     * @param  array{phone?: ?string, bio?: ?string}  $profile
      */
-    public function createWithProfile(array $attributes, ?string $phone): User;
+    public function createWithProfile(array $attributes, array $profile): User;
 }

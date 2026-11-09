@@ -42,7 +42,7 @@ class SlotAvailabilityServiceTest extends TestCase
     /**
      * @return list<string>
      */
-    private function startTimes(?int $duration): array
+    private function startTimes(int $duration): array
     {
         return array_column($this->availability->bookableTimes($this->worker->id, $duration, $this->date), 'start_time');
     }
@@ -75,16 +75,7 @@ class SlotAvailabilityServiceTest extends TestCase
         $slot = $this->slot('08:00', '09:00');
         Booking::factory()->create(['slot_id' => $slot->id, 'status' => 'cancelled']);
 
-        $this->assertSame(['08:00:00'], $this->startTimes(null));
-    }
-
-    public function test_without_duration_only_whole_free_slots_are_offered(): void
-    {
-        $first = $this->slot('08:00', '09:00');
-        $this->slot('09:00', '10:00');
-        Booking::factory()->create(['slot_id' => $first->id, 'start_time' => '08:00:00', 'end_time' => '08:30:00']);
-
-        $this->assertSame(['09:00:00'], $this->startTimes(null));
+        $this->assertSame(['08:00:00'], $this->startTimes(60));
     }
 
     public function test_refresh_availability_marks_fully_booked_slot_unavailable(): void

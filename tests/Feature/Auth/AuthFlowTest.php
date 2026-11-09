@@ -115,4 +115,17 @@ class AuthFlowTest extends TestCase
 
         $this->withToken($token)->getJson('/api/auth/me')->assertOk();
     }
+
+    public function test_token_expires_after_thirty_days(): void
+    {
+        User::factory()->client()->create(['email' => 'klijent@test.com', 'password' => bcrypt('tajna')]);
+        $token = $this->postJson('/api/auth/login', ['email' => 'klijent@test.com', 'password' => 'tajna'])->json('token');
+
+        $this->travel(29)->days();
+        $this->withToken($token)->getJson('/api/auth/me')->assertOk();
+
+        $this->travel(2)->days();
+        $this->app['auth']->forgetGuards();
+        $this->withToken($token)->getJson('/api/auth/me')->assertUnauthorized();
+    }
 }

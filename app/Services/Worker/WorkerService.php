@@ -8,6 +8,7 @@ use App\Notifications\WorkerInvite;
 use App\Repositories\Contracts\ServiceRepositoryInterface;
 use App\Repositories\Contracts\WorkerRepositoryInterface;
 use App\Services\Contracts\CurrentTenantInterface;
+use App\Services\Contracts\WorkerPhotoServiceInterface;
 use App\Services\Contracts\WorkerServiceInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
@@ -18,6 +19,7 @@ class WorkerService implements WorkerServiceInterface
         private readonly WorkerRepositoryInterface $workers,
         private readonly ServiceRepositoryInterface $services,
         private readonly CurrentTenantInterface $currentTenant,
+        private readonly WorkerPhotoServiceInterface $photos,
     ) {}
 
     public function listFor(User $user, ?int $clientId = null): Collection
@@ -37,7 +39,10 @@ class WorkerService implements WorkerServiceInterface
             'email' => $email,
             'client_id' => $client->id,
             'invite_token' => $inviteToken,
-        ], $data['phone'] ?? null);
+        ], [
+            'phone' => $data['phone'] ?? null,
+            'bio' => $data['bio'] ?? null,
+        ]);
 
         // Novi radnik podrazumevano radi sve aktivne usluge firme
         $worker->services()->sync($this->services->activeIds());
@@ -57,11 +62,10 @@ class WorkerService implements WorkerServiceInterface
             'can_edit_slots' => $data['can_edit_slots'] ?? null,
         ], fn (mixed $value): bool => $value !== null));
 
-        if (array_key_exists('phone', $data)) {
-            $worker->workerProfile()->updateOrCreate(
-                ['user_id' => $worker->id],
-                ['phone' => $data['phone']]
-            );
+        $profile = array_intersect_key($data, array_flip(['phone', 'bio']));
+
+        if ($profile !== []) {
+            $worker->workerProfile()->updateOrCreate(['user_id' => $worker->id], $profile);
         }
 
         return ($worker->fresh() ?? $worker)->load('workerProfile');
@@ -69,6 +73,7 @@ class WorkerService implements WorkerServiceInterface
 
     public function delete(User $worker): void
     {
+        $this->photos->delete($worker);
         $worker->delete();
     }
 }

@@ -1,8 +1,12 @@
+@props(['brand' => null])
+@php
+    $brand ??= \App\Notifications\Messages\BrandedMailMessage::brand(null);
+@endphp
 <x-mail::layout>
     {{-- Header --}}
     <x-slot:header>
-        <x-mail::header :url="config('app.url')">
-            {{ config('app.name') }}
+        <x-mail::header :url="$brand['url']">
+            {{ $brand['name'] }}
         </x-mail::header>
     </x-slot:header>
 
@@ -21,7 +25,7 @@
     {{-- Footer --}}
     <x-slot:footer>
         <x-mail::footer>
-            © {{ date('Y') }} {{ config('app.name') }}. @lang('All rights reserved.')
+            © {{ date('Y') }} {{ $brand['name'] }}. @lang('All rights reserved.')
         </x-mail::footer>
     </x-slot:footer>
 </x-mail::layout>

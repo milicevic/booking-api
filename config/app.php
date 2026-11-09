@@ -71,7 +71,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Termini u bazi su lokalno vreme salona, pa now()/today() moraju da budu u istoj zoni
+    'timezone' => env('APP_TIMEZONE', 'Europe/Belgrade'),
 
     /*
     |--------------------------------------------------------------------------

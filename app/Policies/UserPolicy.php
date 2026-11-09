@@ -13,12 +13,18 @@ class UserPolicy
 {
     public function view(User $user, User $worker): bool
     {
-        return $this->managesWorker($user, $worker);
+        return $this->managesWorker($user, $worker) || $user->is($worker);
     }
 
     public function update(User $user, User $worker): bool
     {
         return $this->managesWorker($user, $worker);
+    }
+
+    /** Opis i sliku menja klijent (ili admin), ali i sam radnik za svoj profil. */
+    public function updateProfile(User $user, User $worker): bool
+    {
+        return $this->managesWorker($user, $worker) || $user->is($worker);
     }
 
     public function delete(User $user, User $worker): bool

@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command(ExpireTrialSubscriptions::class)->daily();
+
+// Brisanje isteklih Sanctum tokena (rok važenja: sanctum.expiration)
+Schedule::command('sanctum:prune-expired --hours=24')->daily();

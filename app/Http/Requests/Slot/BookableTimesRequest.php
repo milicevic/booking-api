@@ -17,8 +17,9 @@ class BookableTimesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'worker_id' => ['required', 'integer', 'exists:users,id'],
-            'service_id' => ['nullable', 'integer', 'exists:services,id'],
+            // Filter prikaza: bez radnika vraćaju se vremena svih radnika usluge (rezervacija uvek ide preko slot_id radnika)
+            'worker_id' => ['nullable', 'integer', 'exists:users,id'],
+            'service_id' => ['required', 'integer', 'exists:services,id'],
             'date' => ['nullable', 'date'],
         ];
     }

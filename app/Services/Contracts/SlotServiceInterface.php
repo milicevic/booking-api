@@ -15,11 +15,13 @@ interface SlotServiceInterface
     public function availableForPublic(array $filters): Collection;
 
     /**
-     * Vremena za zakazivanje kod radnika, prema trajanju izabrane usluge.
+     * Vremena za zakazivanje usluge, prema njenom trajanju: kod izabranog radnika,
+     * ili (bez radnika) kod svakog radnika koji je radi — isto vreme se tada javlja
+     * jednom za svakog slobodnog radnika.
      *
-     * @return list<array{slot_id: int, date: string, start_time: string, end_time: string}>
+     * @return list<array{slot_id: int, worker_id: int, date: string, start_time: string, end_time: string}>
      */
-    public function bookableTimes(int $workerId, ?int $serviceId, ?string $date): array;
+    public function bookableTimes(?int $workerId, int $serviceId, ?string $date): array;
 
     /**
      * @return Collection<int, Slot>

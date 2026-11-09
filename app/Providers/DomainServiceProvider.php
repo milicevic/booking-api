@@ -5,7 +5,9 @@ namespace App\Providers;
 use App\Services\Auth\AuthService;
 use App\Services\Auth\EmailVerificationService;
 use App\Services\Auth\GoogleAuthService;
+use App\Services\Auth\PasswordResetService;
 use App\Services\Auth\SanctumTokenIssuer;
+use App\Services\Auth\TurnstileCaptcha;
 use App\Services\Booking\BookingNotifier;
 use App\Services\Booking\BookingService;
 use App\Services\Catalog\ServiceCatalogService;
@@ -13,11 +15,14 @@ use App\Services\Client\ClientService;
 use App\Services\Contracts\AuthServiceInterface;
 use App\Services\Contracts\BookingNotifierInterface;
 use App\Services\Contracts\BookingServiceInterface;
+use App\Services\Contracts\CaptchaVerifierInterface;
 use App\Services\Contracts\ClientServiceInterface;
 use App\Services\Contracts\CurrentTenantInterface;
 use App\Services\Contracts\EmailVerificationServiceInterface;
 use App\Services\Contracts\GoogleAuthServiceInterface;
 use App\Services\Contracts\LogoServiceInterface;
+use App\Services\Contracts\MediaStorageInterface;
+use App\Services\Contracts\PasswordResetServiceInterface;
 use App\Services\Contracts\PushSubscriptionServiceInterface;
 use App\Services\Contracts\ServiceCatalogServiceInterface;
 use App\Services\Contracts\SlotAvailabilityServiceInterface;
@@ -28,7 +33,9 @@ use App\Services\Contracts\TenantServiceInterface;
 use App\Services\Contracts\TokenIssuerInterface;
 use App\Services\Contracts\UserNotificationServiceInterface;
 use App\Services\Contracts\VisibleWorkersResolverInterface;
+use App\Services\Contracts\WorkerPhotoServiceInterface;
 use App\Services\Contracts\WorkerServiceInterface;
+use App\Services\Media\MediaStorage;
 use App\Services\Notification\UserNotificationService;
 use App\Services\Push\PushSubscriptionService;
 use App\Services\Slot\SlotAvailabilityService;
@@ -39,6 +46,7 @@ use App\Services\Tenant\SubdomainGenerator;
 use App\Services\Tenant\TenantRegistrationService;
 use App\Services\Tenant\TenantService;
 use App\Services\Worker\VisibleWorkersResolver;
+use App\Services\Worker\WorkerPhotoService;
 use App\Services\Worker\WorkerService;
 use Illuminate\Support\ServiceProvider;
 
@@ -58,8 +66,11 @@ class DomainServiceProvider extends ServiceProvider
         ClientServiceInterface::class => ClientService::class,
         CurrentTenantInterface::class => CurrentTenant::class,
         EmailVerificationServiceInterface::class => EmailVerificationService::class,
+        PasswordResetServiceInterface::class => PasswordResetService::class,
+        CaptchaVerifierInterface::class => TurnstileCaptcha::class,
         GoogleAuthServiceInterface::class => GoogleAuthService::class,
         LogoServiceInterface::class => LogoService::class,
+        MediaStorageInterface::class => MediaStorage::class,
         PushSubscriptionServiceInterface::class => PushSubscriptionService::class,
         ServiceCatalogServiceInterface::class => ServiceCatalogService::class,
         SlotAvailabilityServiceInterface::class => SlotAvailabilityService::class,
@@ -71,5 +82,6 @@ class DomainServiceProvider extends ServiceProvider
         UserNotificationServiceInterface::class => UserNotificationService::class,
         VisibleWorkersResolverInterface::class => VisibleWorkersResolver::class,
         WorkerServiceInterface::class => WorkerService::class,
+        WorkerPhotoServiceInterface::class => WorkerPhotoService::class,
     ];
 }

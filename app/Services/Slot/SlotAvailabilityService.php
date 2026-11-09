@@ -13,7 +13,6 @@ use Illuminate\Support\Collection;
  * Nude se počeci termina i trenuci kada se završava neka aktivna rezervacija,
  * ako od tog trenutka ima dovoljno slobodnog vremena za uslugu (npr. posle usluge
  * od 40 minuta u 08:00 nudi se 08:40 za uslugu od 20 minuta).
- * Bez trajanja (radnik bez usluga) nude se samo celi slobodni termini.
  */
 class SlotAvailabilityService implements SlotAvailabilityServiceInterface
 {
@@ -22,7 +21,7 @@ class SlotAvailabilityService implements SlotAvailabilityServiceInterface
         private readonly BookingRepositoryInterface $bookings,
     ) {}
 
-    public function bookableTimes(int $workerId, ?int $durationMinutes, ?string $date = null): array
+    public function bookableTimes(int $workerId, int $durationMinutes, ?string $date = null): array
     {
         $slotsByDay = $this->slots->upcomingForWorker($workerId, $date)
             ->groupBy(fn (Slot $slot): string => $slot->date->toDateString());
@@ -53,21 +52,14 @@ class SlotAvailabilityService implements SlotAvailabilityServiceInterface
                     continue;
                 }
 
-                if ($durationMinutes === null) {
-                    // Bez usluge rezervacija zauzima ceo termin, pa nudimo samo njegov početak
-                    if ($start !== Slot::toMinutes($slot->start_time)) {
-                        continue;
-                    }
-                    $end = Slot::toMinutes($slot->end_time);
-                } else {
-                    $end = $start + $durationMinutes;
-                }
+                $end = $start + $durationMinutes;
 
                 $fits = collect($free)->contains(fn (array $interval): bool => $interval[0] <= $start && $end <= $interval[1]);
 
                 if ($fits) {
                     $times[] = [
                         'slot_id' => $slot->id,
+                        'worker_id' => $workerId,
                         'date' => $day,
                         'start_time' => Slot::fromMinutes($start),
                         'end_time' => Slot::fromMinutes($end),

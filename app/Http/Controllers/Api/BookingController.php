@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\BookingReviewController;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Booking\ConfirmByLinkRequest;
 use App\Http\Requests\Booking\StoreBookingRequest;
 use App\Http\Requests\Push\SubscribePushRequest;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\MessageResource;
+use App\Http\Resources\PublicBookingResource;
 use App\Services\Contracts\BookingServiceInterface;
 use App\Services\Contracts\PushSubscriptionServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
@@ -33,15 +36,15 @@ class BookingController extends Controller
         /** @var array{slot_id: int, start_time?: ?string, service_id?: ?int, customer_name: string, customer_email?: ?string, customer_phone?: ?string, note?: ?string} $data */
         $data = $request->validated();
 
-        return BookingResource::make($this->bookings->create($data))
+        return PublicBookingResource::make($this->bookings->create($data))
             ->response()
             ->setStatusCode(201);
     }
 
     /** Javno — kupac vidi svoju rezervaciju preko tokena */
-    public function show(string $token): BookingResource
+    public function show(string $token): PublicBookingResource
     {
-        return BookingResource::make($this->bookings->findByToken($token));
+        return PublicBookingResource::make($this->bookings->findByToken($token));
     }
 
     /** Javno — kupac otkazuje preko tokena */
@@ -75,12 +78,12 @@ class BookingController extends Controller
     }
 
     /** Javno — potvrda/odbijanje putem potpisanog linka iz emaila */
-    public function confirmByLink(ConfirmByLinkRequest $request, string $token): MessageResource
+    /**
+     * Stari link iz već poslatih mejlova: više ne menja rezervaciju, nego vodi na stranicu za pregled.
+     */
+    public function confirmByLink(ConfirmByLinkRequest $request, string $token): RedirectResponse
     {
-        $action = $request->action();
-        $this->bookings->applyLinkAction($token, $action);
-
-        return MessageResource::make($action->successMessage());
+        return redirect()->away(BookingReviewController::signedUrl($token, $request->action()));
     }
 
     /** Javno — kupac registruje push pretplatu za svoju rezervaciju */

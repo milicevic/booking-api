@@ -19,11 +19,20 @@ class BookingStoreTest extends TestCase
 {
     use RefreshDatabase;
 
+    private Service $service;
+
+    /** Termin radnika koji radi uslugu ($this->service) tačno dužine termina. */
     private function makeSlotForClient(User $client): Slot
     {
         $worker = User::factory()->worker($client->id)->create();
+        $slot = Slot::factory()->create(['worker_id' => $worker->id, 'is_available' => true]);
+        $this->service = Service::factory()->create([
+            'is_active' => true,
+            'duration_minutes' => Slot::toMinutes($slot->end_time) - Slot::toMinutes($slot->start_time),
+        ]);
+        $worker->services()->attach($this->service->id);
 
-        return Slot::factory()->create(['worker_id' => $worker->id, 'is_available' => true]);
+        return $slot;
     }
 
     // --- Ručna potvrda (auto_confirm = false) ---
@@ -38,6 +47,7 @@ class BookingStoreTest extends TestCase
 
         $response = $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
+            'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
             'customer_email' => 'ana@example.com',
         ]);
@@ -56,6 +66,7 @@ class BookingStoreTest extends TestCase
 
         $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
+            'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
             'customer_email' => 'ana@example.com',
         ]);
@@ -73,6 +84,7 @@ class BookingStoreTest extends TestCase
 
         $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
+            'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
             'customer_email' => 'ana@example.com',
         ]);
@@ -92,6 +104,7 @@ class BookingStoreTest extends TestCase
 
         $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
+            'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
             'customer_email' => 'ana@example.com',
         ]);
@@ -109,7 +122,9 @@ class BookingStoreTest extends TestCase
 
         $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
+            'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
         ]);
 
         $booking = Booking::where('slot_id', $slot->id)->firstOrFail();
@@ -130,6 +145,7 @@ class BookingStoreTest extends TestCase
 
         $response = $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
+            'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
             'customer_email' => 'ana@example.com',
         ]);
@@ -148,6 +164,7 @@ class BookingStoreTest extends TestCase
 
         $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
+            'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
             'customer_email' => 'ana@example.com',
         ]);
@@ -167,6 +184,7 @@ class BookingStoreTest extends TestCase
 
         $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
+            'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
             'customer_email' => 'ana@example.com',
         ]);
@@ -188,6 +206,7 @@ class BookingStoreTest extends TestCase
 
         $response = $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
+            'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
             'customer_email' => 'ana@example.com',
         ]);
@@ -199,7 +218,7 @@ class BookingStoreTest extends TestCase
     {
         $response = $this->postJson('/api/bookings', []);
 
-        $response->assertStatus(422)->assertJsonValidationErrors(['slot_id', 'customer_name']);
+        $response->assertStatus(422)->assertJsonValidationErrors(['slot_id', 'service_id', 'customer_name']);
     }
 
     // --- Service ---
@@ -226,7 +245,7 @@ class BookingStoreTest extends TestCase
         $this->assertDatabaseHas('bookings', ['slot_id' => $slot->id, 'service_id' => $service->id]);
     }
 
-    public function test_service_is_required_when_worker_offers_services(): void
+    public function test_service_is_required(): void
     {
         Notification::fake();
 
@@ -291,7 +310,7 @@ class BookingStoreTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function test_booking_without_service_is_allowed(): void
+    public function test_booking_without_service_is_rejected(): void
     {
         Notification::fake();
 
@@ -299,12 +318,35 @@ class BookingStoreTest extends TestCase
         ClientProfile::factory()->create(['user_id' => $client->id]);
         $slot = $this->makeSlotForClient($client);
 
-        $response = $this->postJson('/api/bookings', [
+        $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
             'customer_name' => 'Ana Anić',
-        ]);
+        ])->assertUnprocessable()->assertJsonValidationErrors(['service_id']);
 
-        $response->assertStatus(201);
-        $this->assertDatabaseHas('bookings', ['slot_id' => $slot->id, 'service_id' => null]);
+        $this->assertDatabaseMissing('bookings', ['slot_id' => $slot->id]);
+    }
+
+    public function test_customer_facing_responses_do_not_expose_worker_contact_details(): void
+    {
+        Notification::fake();
+
+        $client = User::factory()->client()->create();
+        ClientProfile::factory()->create(['user_id' => $client->id]);
+        $slot = $this->makeSlotForClient($client);
+
+        $created = $this->postJson('/api/bookings', [
+            'slot_id' => $slot->id,
+            'service_id' => $this->service->id,
+            'customer_name' => 'Ana Anić',
+            'customer_email' => 'ana@example.com',
+        ])->assertCreated();
+
+        foreach ([$created, $this->getJson('/api/bookings/'.$created->json('token'))->assertOk()] as $response) {
+            $response->assertJsonPath('slot.worker.name', $slot->worker->name)
+                ->assertJsonMissingPath('slot.worker.email')
+                ->assertJsonMissingPath('slot.worker.role')
+                ->assertJsonMissingPath('slot.worker.worker_profile')
+                ->assertJsonMissingPath('tenant_id');
+        }
     }
 }

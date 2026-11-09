@@ -1,14 +1,20 @@
 <?php
 
 return [
+    'details' => [
+        'customer' => 'Customer',
+        'contact' => 'Contact',
+        'worker' => 'Worker',
+        'service' => 'Service',
+        'date' => 'Date',
+        'time' => 'Time',
+        'note' => 'Note',
+    ],
+
     'booking_confirmed_customer' => [
         'subject' => 'Booking confirmed ✓',
         'greeting' => 'Hello, :name!',
         'line' => 'Your booking has been **confirmed**. See you soon!',
-        'worker' => '**Worker:** :name',
-        'service' => '**Service:** :name',
-        'date' => '**Date:** :date',
-        'time' => '**Time:** :start – :end',
         'action' => 'Manage booking',
         'salutation' => 'Thank you for using our service!',
     ],
@@ -17,10 +23,6 @@ return [
         'subject' => 'Booking request received ⏳',
         'greeting' => 'Hello, :name!',
         'line1' => 'Your booking request has been received and is awaiting confirmation.',
-        'worker' => '**Worker:** :name',
-        'service' => '**Service:** :name',
-        'date' => '**Date:** :date',
-        'time' => '**Time:** :start – :end',
         'line2' => 'You will be notified once the booking is confirmed or rejected.',
         'action' => 'View booking',
         'salutation' => 'Thank you for using our service!',
@@ -30,42 +32,30 @@ return [
         'subject' => 'New booking pending confirmation — :name',
         'greeting' => 'New booking!',
         'line' => 'A user has requested a booking. Please confirm or reject the request.',
-        'customer' => '**Customer:** :name',
-        'contact' => '**Contact:** :contact',
-        'worker' => '**Worker:** :name',
-        'service' => '**Service:** :name',
-        'date' => '**Date:** :date',
-        'time' => '**Time:** :start – :end',
-        'note' => '**Note:** :note',
         'action_confirm' => 'Confirm booking',
         'action_reject' => 'Reject booking',
-        'salutation' => 'Booking App',
     ],
 
     'booking_confirmed_client' => [
         'subject' => 'New confirmed booking — :name',
         'greeting' => 'New booking confirmed!',
         'line' => 'A new booking has been automatically confirmed.',
-        'customer' => '**Customer:** :name',
-        'contact' => '**Contact:** :contact',
-        'worker' => '**Worker:** :name',
-        'service' => '**Service:** :name',
-        'date' => '**Date:** :date',
-        'time' => '**Time:** :start – :end',
-        'note' => '**Note:** :note',
         'action' => 'Open dashboard',
-        'salutation' => 'Booking App',
     ],
 
     'booking_rejected_customer' => [
         'subject' => 'Booking rejected',
         'greeting' => 'Hello, :name!',
         'line1' => 'Unfortunately, your booking has been rejected.',
-        'worker' => '**Worker:** :name',
-        'date' => '**Date:** :date',
-        'time' => '**Time:** :start – :end',
         'line2' => 'Available slots are still open — feel free to book another.',
-        'salutation' => 'Booking App',
+    ],
+
+    'reset_password' => [
+        'subject' => 'Set a new password',
+        'greeting' => 'Hello, :name!',
+        'line1' => 'We received a request to set a new password for your account.',
+        'action' => 'Set new password',
+        'line2' => 'The link is valid for :minutes minutes. If you did not ask for this, you can ignore this email.',
     ],
 
     'verify_email' => [
@@ -90,11 +80,7 @@ return [
         'subject' => 'Booking cancelled',
         'greeting' => 'Hello, :name!',
         'line1' => 'Your booking has been cancelled.',
-        'worker' => '**Worker:** :name',
-        'date' => '**Date:** :date',
-        'time' => '**Time:** :start – :end',
         'line2' => 'Available slots are still open — feel free to book another.',
-        'salutation' => 'Booking App',
     ],
 
     'booking_confirmed_customer_push' => [

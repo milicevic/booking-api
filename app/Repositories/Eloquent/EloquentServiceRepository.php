@@ -25,11 +25,12 @@ class EloquentServiceRepository implements ServiceRepositoryInterface
             ->first();
     }
 
-    public function workerHasActiveServices(int $workerId): bool
+    public function findActiveWithWorkers(int $serviceId): ?Service
     {
-        return Service::where('is_active', true)
-            ->whereHas('workers', fn ($query) => $query->where('users.id', $workerId))
-            ->exists();
+        return Service::where('id', $serviceId)
+            ->where('is_active', true)
+            ->with(['workers' => fn ($query) => $query->select('users.id', 'users.name')])
+            ->first();
     }
 
     public function activeIds(): BaseCollection

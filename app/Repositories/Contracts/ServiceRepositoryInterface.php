@@ -17,7 +17,8 @@ interface ServiceRepositoryInterface
 
     public function findActiveForWorker(int $serviceId, int $workerId): ?Service;
 
-    public function workerHasActiveServices(int $workerId): bool;
+    /** Aktivna usluga sa radnicima koji je rade. */
+    public function findActiveWithWorkers(int $serviceId): ?Service;
 
     /**
      * @return BaseCollection<int, int>

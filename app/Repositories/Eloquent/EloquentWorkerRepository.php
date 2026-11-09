@@ -35,14 +35,15 @@ class EloquentWorkerRepository implements WorkerRepositoryInterface
             ->pluck('id');
     }
 
-    public function createWithProfile(array $attributes, ?string $phone): User
+    public function createWithProfile(array $attributes, array $profile): User
     {
-        return DB::transaction(function () use ($attributes, $phone): User {
+        return DB::transaction(function () use ($attributes, $profile): User {
             $worker = User::create([...$attributes, 'role' => UserRole::Worker]);
 
             WorkerProfile::create([
                 'user_id' => $worker->id,
-                'phone' => $phone,
+                'phone' => $profile['phone'] ?? null,
+                'bio' => $profile['bio'] ?? null,
             ]);
 
             return $worker;

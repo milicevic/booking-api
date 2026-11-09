@@ -23,6 +23,7 @@ class ClientProfileResource extends JsonResource
             'phone' => $this->phone,
             'business_name' => $this->business_name,
             'auto_confirm_bookings' => $this->auto_confirm_bookings,
+            'customer_contact' => $this->customer_contact,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

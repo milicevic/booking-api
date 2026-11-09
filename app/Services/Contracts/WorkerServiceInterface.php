@@ -13,12 +13,12 @@ interface WorkerServiceInterface
     public function listFor(User $user, ?int $clientId = null): Collection;
 
     /**
-     * @param  array{name: string, email?: ?string, phone?: ?string}  $data
+     * @param  array{name: string, email?: ?string, phone?: ?string, bio?: ?string}  $data
      */
     public function create(User $client, array $data): User;
 
     /**
-     * @param  array{name?: string, email?: ?string, phone?: ?string, can_edit_slots?: bool}  $data
+     * @param  array{name?: string, email?: ?string, phone?: ?string, bio?: ?string, can_edit_slots?: bool}  $data
      */
     public function update(User $worker, array $data): User;
 

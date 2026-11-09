@@ -4,6 +4,7 @@ use App\Http\Middleware\CheckSubscription;
 use App\Http\Middleware\CheckSuperadmin;
 use App\Http\Middleware\HandleTenantCors;
 use App\Http\Middleware\ResolveTenant;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(HandleTenantCors::class);
         $middleware->append(SetLocale::class);
+        $middleware->append(SecurityHeaders::class);
 
         $middleware->alias([
             'resolve.tenant' => ResolveTenant::class,

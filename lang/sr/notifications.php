@@ -1,14 +1,20 @@
 <?php
 
 return [
+    'details' => [
+        'customer' => 'Korisnik',
+        'contact' => 'Kontakt',
+        'worker' => 'Radnik',
+        'service' => 'Usluga',
+        'date' => 'Datum',
+        'time' => 'Vreme',
+        'note' => 'Napomena',
+    ],
+
     'booking_confirmed_customer' => [
         'subject' => 'Rezervacija potvrđena ✓',
         'greeting' => 'Zdravo, :name!',
         'line' => 'Vaša rezervacija je **potvrđena**. Vidimo se!',
-        'worker' => '**Radnik:** :name',
-        'service' => '**Usluga:** :name',
-        'date' => '**Datum:** :date',
-        'time' => '**Vreme:** :start – :end',
         'action' => 'Upravljaj rezervacijom',
         'salutation' => 'Hvala što koristite naš servis!',
     ],
@@ -17,10 +23,6 @@ return [
         'subject' => 'Zahtev za rezervaciju je primljen ⏳',
         'greeting' => 'Zdravo, :name!',
         'line1' => 'Vaš zahtev za rezervaciju je primljen i čeka potvrdu.',
-        'worker' => '**Radnik:** :name',
-        'service' => '**Usluga:** :name',
-        'date' => '**Datum:** :date',
-        'time' => '**Vreme:** :start – :end',
         'line2' => 'Obavestićemo vas čim rezervacija bude potvrđena ili odbijena.',
         'action' => 'Pogledaj rezervaciju',
         'salutation' => 'Hvala što koristite naš servis!',
@@ -30,42 +32,30 @@ return [
         'subject' => 'Nova rezervacija čeka potvrdu — :name',
         'greeting' => 'Nova rezervacija!',
         'line' => 'Korisnik je zatražio rezervaciju. Potvrdite ili odbijte zahtev.',
-        'customer' => '**Korisnik:** :name',
-        'contact' => '**Kontakt:** :contact',
-        'worker' => '**Radnik:** :name',
-        'service' => '**Usluga:** :name',
-        'date' => '**Datum:** :date',
-        'time' => '**Vreme:** :start – :end',
-        'note' => '**Napomena:** :note',
         'action_confirm' => 'Potvrdi rezervaciju',
         'action_reject' => 'Odbij rezervaciju',
-        'salutation' => 'Booking App',
     ],
 
     'booking_confirmed_client' => [
         'subject' => 'Nova potvrđena rezervacija — :name',
         'greeting' => 'Nova rezervacija potvrđena!',
         'line' => 'Automatski je potvrđena nova rezervacija.',
-        'customer' => '**Korisnik:** :name',
-        'contact' => '**Kontakt:** :contact',
-        'worker' => '**Radnik:** :name',
-        'service' => '**Usluga:** :name',
-        'date' => '**Datum:** :date',
-        'time' => '**Vreme:** :start – :end',
-        'note' => '**Napomena:** :note',
         'action' => 'Otvori kontrolnu tablu',
-        'salutation' => 'Booking App',
     ],
 
     'booking_rejected_customer' => [
         'subject' => 'Rezervacija odbijena',
         'greeting' => 'Zdravo, :name!',
         'line1' => 'Nažalost, vaša rezervacija je odbijena.',
-        'worker' => '**Radnik:** :name',
-        'date' => '**Datum:** :date',
-        'time' => '**Vreme:** :start – :end',
         'line2' => 'Slobodni termini su i dalje dostupni — možete da rezervišete drugi.',
-        'salutation' => 'Booking App',
+    ],
+
+    'reset_password' => [
+        'subject' => 'Postavite novu lozinku',
+        'greeting' => 'Zdravo, :name!',
+        'line1' => 'Dobili smo zahtev da postavite novu lozinku za svoj nalog.',
+        'action' => 'Postavi novu lozinku',
+        'line2' => 'Link važi :minutes minuta. Ako niste vi tražili promenu, slobodno ignorišite ovaj mejl.',
     ],
 
     'verify_email' => [
@@ -90,11 +80,7 @@ return [
         'subject' => 'Rezervacija otkazana',
         'greeting' => 'Zdravo, :name!',
         'line1' => 'Vaša rezervacija je otkazana.',
-        'worker' => '**Radnik:** :name',
-        'date' => '**Datum:** :date',
-        'time' => '**Vreme:** :start – :end',
         'line2' => 'Slobodni termini su i dalje dostupni — možete da rezervišete novi.',
-        'salutation' => 'Booking App',
     ],
 
     'booking_confirmed_customer_push' => [

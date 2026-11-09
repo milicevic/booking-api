@@ -21,4 +21,12 @@ return [
     'cancel_button' => 'Otkaži rezervaciju',
     'cancel_confirm' => 'Da li ste sigurni da želite da otkažete rezervaciju?',
     'cancelled_success' => 'Vaša rezervacija je uspešno otkazana.',
+    'review' => [
+        'title' => 'Nova rezervacija',
+        'subtitle' => 'Proverite podatke i potvrdite ili odbijte rezervaciju.',
+        'customer' => 'Kupac',
+        'contact' => 'Kontakt',
+        'confirm' => 'Potvrdi',
+        'reject' => 'Odbij',
+    ],
 ];

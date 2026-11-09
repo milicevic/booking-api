@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PushController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\ServiceController;
@@ -17,15 +18,17 @@ use App\Http\Controllers\Api\WorkerController;
 use Illuminate\Support\Facades\Route;
 
 // Platform-level rute — bez tenant konteksta
-Route::post('/register', [RegisterController::class, 'store']);
+Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:register');
 Route::get('/register/subdomain-preview', [RegisterController::class, 'subdomainPreview'])->middleware('throttle:60,1');
-Route::post('/auth/login', [AuthController::class, 'login']);
-Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect']);
+Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->middleware('throttle:google');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
 Route::get('/auth/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
     ->whereNumber('id')
     ->name('verification.verify');
 Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend'])->middleware('throttle:6,1');
+Route::post('/auth/password/forgot', [PasswordResetController::class, 'forgot'])->middleware('throttle:6,1');
+Route::post('/auth/password/reset', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
 Route::get('/push/vapid-public-key', [PushController::class, 'vapidPublicKey']);
 Route::get('/bookings/{token}/confirm-by-link', [BookingController::class, 'confirmByLink'])
     ->name('bookings.confirm-by-link');
@@ -55,7 +58,7 @@ Route::middleware('resolve.tenant:optional')->get('/tenant/config', [TenantContr
 Route::middleware(['resolve.tenant', 'check.subscription'])->group(function () {
     Route::get('/slots/available', [SlotController::class, 'available']);
     Route::get('/slots/times', [SlotController::class, 'times']);
-    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::post('/bookings', [BookingController::class, 'store'])->middleware('throttle:bookings');
     Route::get('/bookings/{token}', [BookingController::class, 'show']);
     Route::patch('/bookings/{token}/cancel', [BookingController::class, 'cancel']);
     Route::post('/auth/accept-invite', [AuthController::class, 'acceptInvite']);
@@ -67,6 +70,9 @@ Route::middleware(['resolve.tenant:optional', 'check.subscription', 'auth:sanctu
     Route::get('/auth/me', [AuthController::class, 'me']);
 
     Route::apiResource('workers', WorkerController::class);
+    Route::patch('/workers/{worker}/profile', [WorkerController::class, 'updateProfile']);
+    Route::post('/workers/{worker}/photo', [WorkerController::class, 'uploadPhoto']);
+    Route::delete('/workers/{worker}/photo', [WorkerController::class, 'deletePhoto']);
     Route::apiResource('slots', SlotController::class);
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::patch('/bookings/{token}/confirm', [BookingController::class, 'confirm']);

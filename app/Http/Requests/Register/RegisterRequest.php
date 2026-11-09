@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests\Register;
 
+use App\Http\Requests\Concerns\VerifiesCaptcha;
 use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class RegisterRequest extends FormRequest
 {
+    use VerifiesCaptcha;
+
     public function authorize(): bool
     {
         return true;

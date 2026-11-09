@@ -2,7 +2,9 @@
 
 namespace App\Notifications;
 
+use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Notifications\Messages\BrandedMailMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
@@ -45,18 +47,14 @@ class BookingRejectedCustomer extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $slot = $this->booking->slot;
-        $worker = $slot->worker;
         $t = 'notifications.booking_rejected_customer';
 
-        return (new MailMessage)
+        return BrandedMailMessage::for($this->booking->tenant ?? $this->booking->slot->worker->tenant)
             ->subject(__("{$t}.subject"))
+            ->status(BookingStatus::Rejected)
             ->greeting(__("{$t}.greeting", ['name' => $this->booking->customer_name]))
             ->line(__("{$t}.line1"))
-            ->line(__("{$t}.worker", ['name' => $worker->name]))
-            ->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
-            ->line(__("{$t}.time", ['start' => substr($this->booking->start_time, 0, 5), 'end' => substr($this->booking->end_time, 0, 5)]))
-            ->line(__("{$t}.line2"))
-            ->salutation(__("{$t}.salutation"));
+            ->bookingDetails($this->booking)
+            ->line(__("{$t}.line2"));
     }
 }

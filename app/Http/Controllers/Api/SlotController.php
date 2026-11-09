@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Slot\AvailableSlotsRequest;
 use App\Http\Requests\Slot\BookableTimesRequest;
 use App\Http\Requests\Slot\StoreSlotRequest;
+use App\Http\Resources\PublicSlotResource;
 use App\Http\Resources\SlotResource;
 use App\Models\Slot;
 use App\Services\Contracts\SlotServiceInterface;
@@ -24,15 +25,15 @@ class SlotController extends Controller
         /** @var array{date?: ?string, worker_id?: int|string|null, service_id?: int|string|null} $filters */
         $filters = $request->validated();
 
-        return SlotResource::collection($this->slots->availableForPublic($filters));
+        return PublicSlotResource::collection($this->slots->availableForPublic($filters));
     }
 
-    /** Javno — vremena u koja kupac može da zakaže kod radnika, prema trajanju izabrane usluge */
+    /** Javno — vremena za izabranu uslugu, kod jednog radnika ili kod svih koji je rade (vidi docs/booking-flow.md) */
     public function times(BookableTimesRequest $request): JsonResponse
     {
         return response()->json($this->slots->bookableTimes(
-            $request->integer('worker_id'),
-            $request->filled('service_id') ? $request->integer('service_id') : null,
+            $request->filled('worker_id') ? $request->integer('worker_id') : null,
+            $request->integer('service_id'),
             $request->filled('date') ? $request->string('date')->toString() : null,
         ));
     }

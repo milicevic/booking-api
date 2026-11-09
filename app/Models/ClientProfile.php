@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CustomerContact;
 use App\Models\Concerns\BelongsToTenant;
 use Database\Factories\ClientProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,6 +28,7 @@ class ClientProfile extends Model
         'phone',
         'business_name',
         'auto_confirm_bookings',
+        'customer_contact',
     ];
 
     /**
@@ -36,6 +38,7 @@ class ClientProfile extends Model
     {
         return [
             'auto_confirm_bookings' => 'boolean',
+            'customer_contact' => CustomerContact::class,
         ];
     }
 
