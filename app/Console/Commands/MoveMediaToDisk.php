@@ -23,7 +23,7 @@ class MoveMediaToDisk extends Command
     public function handle(MediaStorageInterface $media, FilesystemFactory $filesystem): int
     {
         if (config('filesystems.media_disk') === 'public') {
-            $this->warn('MEDIA_DISK is "public"; set it to the bucket disk (e.g. s3) first.');
+            $this->warn('MEDIA_DISK is "public"; set it to the bucket disk (e.g. r2) first.');
 
             return self::FAILURE;
         }
