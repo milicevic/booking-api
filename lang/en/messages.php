@@ -6,6 +6,7 @@ return [
     'account_suspended' => 'Account is suspended.',
     'email_not_verified' => 'Please confirm your email address. We sent you a link when you registered.',
     'verification_sent' => 'If the account exists and is not confirmed yet, we sent a new confirmation link.',
+    'password_reset_link_sent' => 'If an account with that email exists, we sent a link to set a new password.',
     'logged_out' => 'Logged out.',
     'invalid_invite_token' => 'Invalid or expired invite token.',
 
@@ -15,8 +16,15 @@ return [
 
     // Booking
     'slot_unavailable' => 'This slot is no longer available.',
+    'slot_overlaps' => 'This worker already has a slot that overlaps this time.',
     'service_required' => 'Please choose a service.',
+    'captcha_failed' => 'Please confirm that you are not a robot and try again.',
+    'contact_email_or_phone_required' => 'Enter your email or phone number.',
+    'contact_both_required' => 'Enter both your email and phone number.',
+    'contact_phone_required' => 'Enter your phone number.',
+    'contact_email_required' => 'Enter your email.',
     'service_unavailable_for_worker' => 'This service is not available for the selected worker.',
+    'service_unavailable' => 'This service is not available.',
     'booking_not_pending' => 'Booking is not in pending status.',
     'booking_cancelled' => 'Booking cancelled.',
     'booking_confirmed' => 'Booking confirmed.',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\CustomerContact;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -27,6 +28,8 @@ class TenantConfigResource extends JsonResource
             'subdomain' => $this->subdomain,
             'currency' => $this->currency,
             'locale' => $this->locale,
+            // Koje kontakt podatke kupac mora da ostavi (podešavanje vlasnika firme)
+            'customer_contact' => $this->clientProfiles->first()->customer_contact ?? CustomerContact::EmailOrPhone,
             'subscription_status' => $this->subscription_status,
             'trial_ends_at' => $this->trial_ends_at,
             'subscription_ends_at' => $this->subscription_ends_at,

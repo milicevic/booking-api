@@ -6,6 +6,7 @@ return [
     'account_suspended' => 'Nalog je suspendovan.',
     'email_not_verified' => 'Potvrdite email adresu. Link smo vam poslali pri registraciji.',
     'verification_sent' => 'Ako nalog postoji i još nije potvrđen, poslali smo novi link za potvrdu.',
+    'password_reset_link_sent' => 'Ako postoji nalog sa tom email adresom, poslali smo link za novu lozinku.',
     'logged_out' => 'Odjavljen.',
     'invalid_invite_token' => 'Nevažeći ili istekli token za poziv.',
 
@@ -15,8 +16,15 @@ return [
 
     // Booking
     'slot_unavailable' => 'Termin više nije dostupan.',
+    'slot_overlaps' => 'Radnik već ima termin koji se preklapa sa ovim vremenom.',
     'service_required' => 'Izaberite uslugu.',
+    'captcha_failed' => 'Potvrdite da niste robot i pokušajte ponovo.',
+    'contact_email_or_phone_required' => 'Unesite email ili broj telefona.',
+    'contact_both_required' => 'Unesite i email i broj telefona.',
+    'contact_phone_required' => 'Unesite broj telefona.',
+    'contact_email_required' => 'Unesite email.',
     'service_unavailable_for_worker' => 'Izabrana usluga nije dostupna kod ovog radnika.',
+    'service_unavailable' => 'Ova usluga nije dostupna.',
     'booking_not_pending' => 'Rezervacija nije u statusu čekanja.',
     'booking_cancelled' => 'Rezervacija otkazana.',
     'booking_confirmed' => 'Rezervacija potvrđena.',

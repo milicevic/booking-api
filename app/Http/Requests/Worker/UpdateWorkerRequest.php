@@ -21,6 +21,7 @@ class UpdateWorkerRequest extends FormRequest
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => ['nullable', 'email', Rule::unique('users', 'email')->ignore($this->route('worker'))],
             'phone' => ['nullable', 'string'],
+            'bio' => ['nullable', 'string', 'max:500'],
             'can_edit_slots' => ['sometimes', 'boolean'],
         ];
     }

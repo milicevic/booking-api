@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\Services\Contracts\LogoServiceInterface;
 use App\Services\Contracts\TenantServiceInterface;
+use App\Services\Contracts\WorkerPhotoServiceInterface;
 use Illuminate\Database\Eloquent\Collection;
 
 class TenantService implements TenantServiceInterface
@@ -14,6 +15,7 @@ class TenantService implements TenantServiceInterface
     public function __construct(
         private readonly TenantRepositoryInterface $tenants,
         private readonly LogoServiceInterface $logos,
+        private readonly WorkerPhotoServiceInterface $workerPhotos,
     ) {}
 
     public function allWithUserCount(): Collection
@@ -54,5 +56,6 @@ class TenantService implements TenantServiceInterface
     {
         $this->tenants->deleteWithData($tenant);
         $this->logos->deleteAllFor($tenant);
+        $this->workerPhotos->deleteAllFor($tenant);
     }
 }

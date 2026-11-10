@@ -37,6 +37,9 @@ interface SlotRepositoryInterface
     /** Zaključava sve termine radnika tog dana do kraja transakcije. */
     public function lockWorkerDay(int $workerId, string $date): void;
 
+    /** Da li radnik tog dana već ima termin koji se preklapa sa [$start, $end). */
+    public function overlapsForWorker(int $workerId, string $date, string $start, string $end): bool;
+
     public function findOrFail(int $id): Slot;
 
     /**

@@ -2,7 +2,9 @@
 
 namespace App\Notifications;
 
+use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Notifications\Messages\BrandedMailMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
@@ -45,23 +47,14 @@ class BookingConfirmedCustomer extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $slot = $this->booking->slot;
-        $worker = $slot->worker;
         $t = 'notifications.booking_confirmed_customer';
 
-        $mail = (new MailMessage)
+        return BrandedMailMessage::for($this->booking->tenant ?? $this->booking->slot->worker->tenant)
             ->subject(__("{$t}.subject"))
+            ->status(BookingStatus::Confirmed)
             ->greeting(__("{$t}.greeting", ['name' => $this->booking->customer_name]))
             ->line(__("{$t}.line"))
-            ->line(__("{$t}.worker", ['name' => $worker->name]));
-
-        if ($this->booking->service) {
-            $mail->line(__("{$t}.service", ['name' => $this->booking->service->labelWithPrice()]));
-        }
-
-        return $mail
-            ->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
-            ->line(__("{$t}.time", ['start' => substr($this->booking->start_time, 0, 5), 'end' => substr($this->booking->end_time, 0, 5)]))
+            ->bookingDetails($this->booking)
             ->action(__("{$t}.action"), $this->booking->manageUrl())
             ->salutation(__("{$t}.salutation"));
     }

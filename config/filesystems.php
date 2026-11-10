@@ -28,6 +28,13 @@ return [
     |
     */
 
+    /*
+    | Disk za slike koje postavljaju korisnici (logoi firmi, slike radnika).
+    | Na produkciji "s3" (Cloudflare R2), jer se lokalni disk servera briše pri deploy-u.
+    */
+
+    'media_disk' => env('MEDIA_DISK', 'public'),
+
     'disks' => [
 
         'local' => [
@@ -56,6 +63,25 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            // R2 i drugi S3-kompatibilni servisi ne podržavaju uvek nove AWS checksum zaglavlja
+            'request_checksum_calculation' => 'when_required',
+            'response_checksum_validation' => 'when_required',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        // Cloudflare R2 (S3-kompatibilan); uključuje se sa MEDIA_DISK=r2
+        'r2' => [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => 'auto',
+            'bucket' => env('R2_BUCKET'),
+            'url' => env('R2_URL'),
+            'endpoint' => env('R2_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'request_checksum_calculation' => 'when_required',
+            'response_checksum_validation' => 'when_required',
             'throw' => false,
             'report' => false,
         ],

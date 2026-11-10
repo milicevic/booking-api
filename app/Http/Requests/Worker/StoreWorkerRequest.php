@@ -20,6 +20,7 @@ class StoreWorkerRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'unique:users,email'],
             'phone' => ['nullable', 'string'],
+            'bio' => ['nullable', 'string', 'max:500'],
         ];
     }
 }

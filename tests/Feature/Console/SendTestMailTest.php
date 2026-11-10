@@ -18,7 +18,8 @@ class SendTestMailTest extends TestCase
         Event::fake([MessageSent::class]);
 
         $this->artisan('mail:test', ['email' => 'ana@salon.com'])
-            ->expectsOutputToContain('Mailer: array')
+            ->expectsOutputToContain('Mailer: array (array)')
+            ->expectsOutputToContain('does not deliver email')
             ->expectsOutputToContain('Test email sent to ana@salon.com.')
             ->assertSuccessful();
 
@@ -41,5 +42,17 @@ class SendTestMailTest extends TestCase
         $this->artisan('mail:test', ['email' => 'ana@salon.com'])
             ->expectsOutputToContain('Sending failed: The slotres.click domain is not verified.')
             ->assertFailed();
+    }
+
+    public function test_fails_when_resend_key_is_missing(): void
+    {
+        config(['mail.default' => 'resend', 'services.resend.key' => null]);
+        Mail::fake();
+
+        $this->artisan('mail:test', ['email' => 'ana@salon.com'])
+            ->expectsOutputToContain('RESEND_API_KEY is not set.')
+            ->assertFailed();
+
+        Mail::assertNothingOutgoing();
     }
 }

@@ -21,6 +21,8 @@ class WorkerProfileResource extends JsonResource
             'user_id' => $this->user_id,
             'tenant_id' => $this->tenant_id,
             'phone' => $this->phone,
+            'photo_url' => $this->photo_url,
+            'bio' => $this->bio,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

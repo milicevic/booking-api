@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Worker\StoreWorkerRequest;
+use App\Http\Requests\Worker\UpdateWorkerProfileRequest;
 use App\Http\Requests\Worker\UpdateWorkerRequest;
+use App\Http\Requests\Worker\UploadWorkerPhotoRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\Contracts\WorkerPhotoServiceInterface;
 use App\Services\Contracts\WorkerServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 
 class WorkerController extends Controller
@@ -24,7 +28,7 @@ class WorkerController extends Controller
 
     public function store(StoreWorkerRequest $request): JsonResponse
     {
-        /** @var array{name: string, email?: ?string, phone?: ?string} $data */
+        /** @var array{name: string, email?: ?string, phone?: ?string, bio?: ?string} $data */
         $data = $request->validated();
 
         return UserResource::make($this->workers->create($request->user(), $data))
@@ -41,10 +45,36 @@ class WorkerController extends Controller
 
     public function update(UpdateWorkerRequest $request, User $worker): UserResource
     {
-        /** @var array{name?: string, email?: ?string, phone?: ?string, can_edit_slots?: bool} $data */
+        /** @var array{name?: string, email?: ?string, phone?: ?string, bio?: ?string, can_edit_slots?: bool} $data */
         $data = $request->validated();
 
         return UserResource::make($this->workers->update($worker, $data));
+    }
+
+    /** Opis radnika; može ga menjati i sam radnik (za razliku od update()). */
+    public function updateProfile(UpdateWorkerProfileRequest $request, User $worker): UserResource
+    {
+        /** @var array{bio?: ?string} $data */
+        $data = $request->validated();
+
+        return UserResource::make($this->workers->update($worker, $data));
+    }
+
+    public function uploadPhoto(UploadWorkerPhotoRequest $request, User $worker, WorkerPhotoServiceInterface $photos): UserResource
+    {
+        /** @var UploadedFile $file */
+        $file = $request->file('photo');
+
+        return UserResource::make($photos->store($worker, $file));
+    }
+
+    public function deletePhoto(User $worker, WorkerPhotoServiceInterface $photos): UserResource
+    {
+        Gate::authorize('updateProfile', $worker);
+
+        $photos->delete($worker);
+
+        return UserResource::make($worker->load('workerProfile'));
     }
 
     public function destroy(User $worker): JsonResponse

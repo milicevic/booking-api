@@ -17,7 +17,7 @@ interface BookingServiceInterface
     public function listFor(User $user, ?int $clientId = null): Collection;
 
     /**
-     * @param  array{slot_id: int, start_time?: ?string, service_id?: ?int, customer_name: string, customer_email?: ?string, customer_phone?: ?string, note?: ?string}  $data
+     * @param  array{slot_id: int, start_time?: ?string, service_id: int, customer_name: string, customer_email?: ?string, customer_phone?: ?string, note?: ?string}  $data
      */
     public function create(array $data): Booking;
 

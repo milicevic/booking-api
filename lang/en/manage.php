@@ -21,4 +21,12 @@ return [
     'cancel_button' => 'Cancel booking',
     'cancel_confirm' => 'Are you sure you want to cancel this booking?',
     'cancelled_success' => 'Your booking has been cancelled.',
+    'review' => [
+        'title' => 'New booking',
+        'subtitle' => 'Check the details and confirm or reject the booking.',
+        'customer' => 'Customer',
+        'contact' => 'Contact',
+        'confirm' => 'Confirm',
+        'reject' => 'Reject',
+    ],
 ];

@@ -4,6 +4,7 @@ namespace Tests\Feature\Localization;
 
 use App\Models\Booking;
 use App\Models\ClientProfile;
+use App\Models\Service;
 use App\Models\Slot;
 use App\Models\User;
 use App\Notifications\BookingPendingClient;
@@ -25,10 +26,13 @@ class MailLocaleTest extends TestCase
         ClientProfile::factory()->create(['user_id' => $client->id]);
         $worker = User::factory()->worker($client->id)->create(['tenant_id' => $this->tenant->id]);
         $slot = Slot::factory()->create(['worker_id' => $worker->id, 'is_available' => true]);
+        $service = Service::factory()->create(['is_active' => true, 'duration_minutes' => 60]);
+        $worker->services()->attach($service->id);
 
         $this->withHeader('Accept-Language', $acceptLanguage)
             ->postJson('/api/bookings', [
                 'slot_id' => $slot->id,
+                'service_id' => $service->id,
                 'customer_name' => 'Ana Anić',
                 'customer_email' => 'ana@example.com',
             ])

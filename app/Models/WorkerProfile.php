@@ -23,6 +23,8 @@ class WorkerProfile extends Model
         'tenant_id',
         'user_id',
         'phone',
+        'photo_url',
+        'bio',
     ];
 
     /**

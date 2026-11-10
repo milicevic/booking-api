@@ -50,7 +50,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Token važi 30 dana (u minutima); posle toga korisnik mora ponovo da se prijavi
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 60 * 24 * 30),
 
     /*
     |--------------------------------------------------------------------------

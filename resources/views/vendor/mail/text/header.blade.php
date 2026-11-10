@@ -1,1 +1,2 @@
-{{ $slot }}: {{ $url }}
+@props(['url', 'brand' => null])
+{{ $slot }}

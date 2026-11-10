@@ -15,7 +15,7 @@ class EloquentSlotRepository implements SlotRepositoryInterface
         $workerId = $filters['worker_id'] ?? null;
         $serviceId = $filters['service_id'] ?? null;
 
-        return Slot::with(['worker', 'worker.services' => fn ($query) => $query->where('is_active', true)])
+        return Slot::with(['worker.workerProfile', 'worker.services' => fn ($query) => $query->where('is_active', true)])
             ->where('is_available', true)
             ->where(fn ($query) => $query
                 ->whereDate('date', '>', today())
@@ -60,6 +60,16 @@ class EloquentSlotRepository implements SlotRepositoryInterface
     public function lockWorkerDay(int $workerId, string $date): void
     {
         Slot::where('worker_id', $workerId)->whereDate('date', $date)->lockForUpdate()->get();
+    }
+
+    public function overlapsForWorker(int $workerId, string $date, string $start, string $end): bool
+    {
+        // Dodirivanje nije preklapanje: 09:00–10:00 i 10:00–11:00 mogu zajedno
+        return Slot::where('worker_id', $workerId)
+            ->whereDate('date', $date)
+            ->where('start_time', '<', $end)
+            ->where('end_time', '>', $start)
+            ->exists();
     }
 
     public function findOrFail(int $id): Slot

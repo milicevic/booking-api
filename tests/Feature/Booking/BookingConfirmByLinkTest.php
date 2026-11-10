@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Booking;
 
+use App\Enums\BookingLinkAction;
+use App\Http\Controllers\BookingReviewController;
 use App\Models\Booking;
 use App\Models\Slot;
 use App\Models\User;
@@ -10,6 +12,7 @@ use App\Notifications\BookingRejectedCustomer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class BookingConfirmByLinkTest extends TestCase
@@ -25,111 +28,105 @@ class BookingConfirmByLinkTest extends TestCase
         return Booking::factory()->create(['slot_id' => $slot->id, 'status' => $status]);
     }
 
-    private function signedUrl(string $token, string $action): string
+    /** Klik na dugme na stranici: POST na potpisanu adresu iz stranice */
+    private function apply(Booking $booking, string $action): TestResponse
     {
-        return URL::signedRoute('bookings.confirm-by-link', [
-            'token' => $token,
-            'action' => $action,
-        ]);
+        $url = URL::temporarySignedRoute('booking.review.apply', now()->addHour(), ['token' => $booking->token]);
+
+        return $this->post($url, ['action' => $action]);
     }
 
-    public function test_confirm_via_signed_link_sets_status_confirmed(): void
+    public function test_opening_the_mail_link_does_not_change_the_booking(): void
     {
         Notification::fake();
+        $booking = $this->setupBooking();
 
-        $booking = $this->setupBooking('pending');
+        // Ovo rade i programi koji skeniraju linkove u mejlovima
+        $this->get(BookingReviewController::signedUrl($booking->token, BookingLinkAction::Reject))
+            ->assertOk()
+            ->assertSee($booking->customer_name)
+            ->assertSee('name="action" value="confirm"', false)
+            ->assertSee('name="action" value="reject"', false);
 
-        $response = $this->getJson($this->signedUrl($booking->token, 'confirm'));
-
-        $response->assertOk();
-        $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'status' => 'confirmed']);
+        $this->assertSame('pending', $booking->fresh()->status->value);
+        Notification::assertNothingSent();
     }
 
-    public function test_customer_receives_confirmed_notification_via_signed_link(): void
+    public function test_confirm_button_confirms_and_notifies_the_customer(): void
     {
         Notification::fake();
+        $booking = $this->setupBooking();
 
-        $booking = $this->setupBooking('pending');
+        $this->apply($booking, 'confirm')->assertRedirect();
 
-        $this->getJson($this->signedUrl($booking->token, 'confirm'));
-
+        $this->assertSame('confirmed', $booking->fresh()->status->value);
         Notification::assertSentTo($booking, BookingConfirmedCustomer::class);
     }
 
-    public function test_reject_via_signed_link_sets_status_rejected(): void
+    public function test_reject_button_rejects_frees_the_slot_and_notifies(): void
     {
         Notification::fake();
+        $booking = $this->setupBooking();
 
-        $booking = $this->setupBooking('pending');
+        $this->apply($booking, 'reject')->assertRedirect();
 
-        $response = $this->getJson($this->signedUrl($booking->token, 'reject'));
-
-        $response->assertOk();
-        $this->assertDatabaseHas('bookings', ['id' => $booking->id, 'status' => 'rejected']);
-    }
-
-    public function test_slot_is_freed_after_reject_via_signed_link(): void
-    {
-        Notification::fake();
-
-        $booking = $this->setupBooking('pending');
-        $slotId = $booking->slot_id;
-
-        $this->getJson($this->signedUrl($booking->token, 'reject'));
-
-        $this->assertDatabaseHas('slots', ['id' => $slotId, 'is_available' => true]);
-    }
-
-    public function test_customer_receives_rejected_notification_via_signed_link(): void
-    {
-        Notification::fake();
-
-        $booking = $this->setupBooking('pending');
-
-        $this->getJson($this->signedUrl($booking->token, 'reject'));
-
+        $this->assertSame('rejected', $booking->fresh()->status->value);
+        $this->assertDatabaseHas('slots', ['id' => $booking->slot_id, 'is_available' => true]);
         Notification::assertSentTo($booking, BookingRejectedCustomer::class);
     }
 
-    public function test_returns_403_with_invalid_signature(): void
+    public function test_mail_link_expires_after_seven_days(): void
     {
-        $booking = $this->setupBooking('pending');
+        $booking = $this->setupBooking();
+        $url = BookingReviewController::signedUrl($booking->token, BookingLinkAction::Confirm);
 
-        $response = $this->getJson("/api/bookings/{$booking->token}/confirm-by-link?action=confirm&signature=invalid");
+        $this->travel(8)->days();
 
-        $response->assertStatus(403);
+        $this->get($url)->assertForbidden();
     }
 
-    public function test_returns_403_with_tampered_url(): void
+    public function test_tampered_or_unsigned_requests_are_rejected(): void
     {
-        $booking = $this->setupBooking('pending');
-        $url = $this->signedUrl($booking->token, 'confirm');
+        $booking = $this->setupBooking();
+        $url = BookingReviewController::signedUrl($booking->token);
 
-        // Promijeni action ali zadrži originalni signature
-        $tamperedUrl = str_replace('action=confirm', 'action=reject', $url);
+        $this->get(str_replace($booking->token, 'drugi-token', $url))->assertForbidden();
+        $this->post("/bookings/{$booking->token}/review", ['action' => 'confirm'])->assertForbidden();
 
-        $response = $this->getJson($tamperedUrl);
-
-        $response->assertStatus(403);
+        $this->assertSame('pending', $booking->fresh()->status->value);
     }
 
-    public function test_returns_422_when_booking_is_not_pending(): void
+    public function test_booking_that_is_no_longer_pending_shows_an_error(): void
     {
         Notification::fake();
-
         $booking = $this->setupBooking('confirmed');
 
-        $response = $this->getJson($this->signedUrl($booking->token, 'confirm'));
+        $this->apply($booking, 'reject')
+            ->assertRedirect()
+            ->assertSessionHas('error');
 
-        $response->assertStatus(422);
+        $this->assertSame('confirmed', $booking->fresh()->status->value);
     }
 
-    public function test_returns_422_with_invalid_action(): void
+    public function test_invalid_action_is_rejected(): void
     {
-        $booking = $this->setupBooking('pending');
+        $booking = $this->setupBooking();
 
-        $response = $this->getJson($this->signedUrl($booking->token, 'invalid-action'));
+        $this->apply($booking, 'nesto')->assertSessionHasErrors('action');
 
-        $response->assertStatus(422);
+        $this->assertSame('pending', $booking->fresh()->status->value);
+    }
+
+    public function test_old_api_links_only_lead_to_the_review_page(): void
+    {
+        Notification::fake();
+        $booking = $this->setupBooking();
+        $oldLink = URL::signedRoute('bookings.confirm-by-link', ['token' => $booking->token, 'action' => 'confirm']);
+
+        $location = $this->get($oldLink)->assertRedirect()->headers->get('Location');
+
+        $this->assertStringContainsString("/bookings/{$booking->token}/review", (string) $location);
+        $this->assertSame('pending', $booking->fresh()->status->value);
+        $this->getJson("/api/bookings/{$booking->token}/confirm-by-link?action=confirm&signature=invalid")->assertForbidden();
     }
 }

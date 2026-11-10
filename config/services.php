@@ -28,6 +28,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Cloudflare Turnstile (zaštita javnih formi od botova); bez tajnog ključa je isključena
+    'turnstile' => [
+        'secret' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

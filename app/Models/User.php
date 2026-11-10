@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Models\Concerns\BelongsToTenant;
+use App\Notifications\ResetPasswordLink;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -87,6 +88,12 @@ class User extends Authenticatable implements HasLocalePreference
         }
 
         return null;
+    }
+
+    /** Link za novu lozinku vodi na sajt firme (vidi ResetPasswordLink), ne na Laravel-ovu podrazumevanu rutu. */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordLink($token));
     }
 
     /**

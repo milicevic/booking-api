@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Tenant;
+use App\Notifications\Messages\BrandedMailMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -32,7 +33,7 @@ class VerifyEmailAddress extends Notification
         ]);
         $t = 'notifications.verify_email';
 
-        return (new MailMessage)
+        return BrandedMailMessage::for($this->tenant)
             ->subject(__("{$t}.subject", ['app_name' => $this->tenant->app_name]))
             ->greeting(__("{$t}.greeting", ['name' => $notifiable->name]))
             ->line(__("{$t}.line1", ['app_name' => $this->tenant->app_name]))

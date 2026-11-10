@@ -4,8 +4,7 @@ namespace App\Services\Tenant;
 
 use App\Models\Tenant;
 use App\Services\Contracts\LogoServiceInterface;
-use Illuminate\Contracts\Filesystem\Factory as FilesystemFactory;
-use Illuminate\Contracts\Filesystem\Filesystem;
+use App\Services\Contracts\MediaStorageInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -22,9 +21,7 @@ class LogoService implements LogoServiceInterface
 
     private const QUALITY = 85;
 
-    private const DISK = 'public';
-
-    public function __construct(private readonly FilesystemFactory $filesystem) {}
+    public function __construct(private readonly MediaStorageInterface $media) {}
 
     public function store(Tenant $tenant, UploadedFile $file): Tenant
     {
@@ -34,25 +31,18 @@ class LogoService implements LogoServiceInterface
             ->encode(new WebpEncoder(quality: self::QUALITY, strip: true));
 
         $path = "{$this->directoryFor($tenant)}/".Str::random(40).'.webp';
-        $this->disk()->put($path, $logo->toString());
-        // Relativna putanja (/storage/...): frontend je na drugom hostu i prosleđuje /storage na API
-        $tenant->update(['logo_url' => '/storage/'.$path]);
+        $tenant->update(['logo_url' => $this->media->put($path, $logo->toString())]);
 
         return $tenant;
     }
 
     public function deleteAllFor(Tenant $tenant): void
     {
-        $this->disk()->deleteDirectory($this->directoryFor($tenant));
+        $this->media->deleteDirectory($this->directoryFor($tenant));
     }
 
     private function directoryFor(Tenant $tenant): string
     {
         return "logos/{$tenant->id}";
-    }
-
-    private function disk(): Filesystem
-    {
-        return $this->filesystem->disk(self::DISK);
     }
 }

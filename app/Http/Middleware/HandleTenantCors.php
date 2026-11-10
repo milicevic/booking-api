@@ -48,12 +48,12 @@ class HandleTenantCors
             return false;
         }
 
-        // Lokalni razvoj: localhost i *.localhost
-        if ($host === 'localhost' || str_ends_with($host, '.localhost')) {
+        // Lokalni razvoj: localhost i *.localhost (samo lokalno i u testovima, nikad na produkciji)
+        if (app()->environment(['local', 'testing']) && ($host === 'localhost' || str_ends_with($host, '.localhost'))) {
             return true;
         }
 
-        // Glavni FE domen (Vercel ili custom) — dozvoljen bez tenant provjere
+        // Tačno navedeni frontend domeni (CORS_ALLOWED_ORIGINS), dozvoljeni bez tenant provere
         $allowedOrigins = array_filter(explode(',', (string) config('app.cors_allowed_origins')));
         foreach ($allowedOrigins as $allowed) {
             if (parse_url(trim($allowed), PHP_URL_HOST) === $host) {

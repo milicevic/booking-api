@@ -4,6 +4,7 @@ namespace App\Services\Booking;
 
 use App\Enums\BookingLinkAction;
 use App\Enums\BookingStatus;
+use App\Enums\CustomerContact;
 use App\Exceptions\DomainException;
 use App\Models\Booking;
 use App\Models\Service;
@@ -41,13 +42,15 @@ class BookingService implements BookingServiceInterface
             $slot = $this->slots->findOrFail((int) $data['slot_id']);
             $date = $slot->date->toDateString();
 
+            $this->ensureContactAllowed($slot, $data);
+
             // Zaključavamo sve termine radnika tog dana, da dve istovremene rezervacije ne zauzmu isto vreme
             $this->slots->lockWorkerDay($slot->worker_id, $date);
 
-            $service = $this->resolveService($slot, isset($data['service_id']) ? (int) $data['service_id'] : null);
+            $service = $this->resolveService($slot, (int) $data['service_id']);
 
             $startTime = isset($data['start_time']) ? "{$data['start_time']}:00" : $slot->start_time;
-            $time = collect($this->availability->bookableTimes($slot->worker_id, $service?->duration_minutes, $date))
+            $time = collect($this->availability->bookableTimes($slot->worker_id, $service->duration_minutes, $date))
                 ->first(fn (array $time): bool => $time['start_time'] === $startTime)
                 ?? throw DomainException::conflict(__('messages.slot_unavailable'));
 
@@ -123,20 +126,27 @@ class BookingService implements BookingServiceInterface
     }
 
     /**
-     * Ako radnik nudi usluge, kupac mora da izabere jednu od njih (aktivnu i dodeljenu radniku).
+     * Usluga mora biti aktivna i dodeljena radniku iz termina.
      */
-    private function resolveService(Slot $slot, ?int $serviceId): ?Service
+    private function resolveService(Slot $slot, int $serviceId): Service
     {
-        if ($serviceId === null) {
-            if ($this->services->workerHasActiveServices($slot->worker_id)) {
-                throw DomainException::unprocessable(__('messages.service_required'));
-            }
-
-            return null;
-        }
-
         return $this->services->findActiveForWorker($serviceId, $slot->worker_id)
             ?? throw DomainException::unprocessable(__('messages.service_unavailable_for_worker'));
+    }
+
+    /**
+     * Kontakt kupca mora da ispuni pravilo vlasnika firme (CustomerContact), podrazumevano email ili telefon.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function ensureContactAllowed(Slot $slot, array $data): void
+    {
+        $contact = $slot->worker->client?->clientProfile->customer_contact ?? CustomerContact::EmailOrPhone;
+        $violation = $contact->violation($data['customer_email'] ?? null, $data['customer_phone'] ?? null);
+
+        if ($violation !== null) {
+            throw DomainException::unprocessable(__($violation));
+        }
     }
 
     private function ensurePending(Booking $booking): void

@@ -2,10 +2,13 @@
 
 namespace App\Notifications;
 
+use App\Enums\BookingLinkAction;
+use App\Enums\BookingStatus;
+use App\Http\Controllers\BookingReviewController;
 use App\Models\Booking;
+use App\Notifications\Messages\BrandedMailMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\URL;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
@@ -60,44 +63,19 @@ class BookingPendingClient extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $slot = $this->booking->slot;
-        $worker = $slot->worker;
         $t = 'notifications.booking_pending_client';
 
-        $confirmUrl = URL::signedRoute('bookings.confirm-by-link', [
-            'token' => $this->booking->token,
-            'action' => 'confirm',
-        ]);
+        // Linkovi otvaraju stranicu za pregled (BookingReviewController); akcija se ne izvršava samim otvaranjem
+        $confirmUrl = BookingReviewController::signedUrl($this->booking->token, BookingLinkAction::Confirm);
+        $rejectUrl = BookingReviewController::signedUrl($this->booking->token, BookingLinkAction::Reject);
 
-        $rejectUrl = URL::signedRoute('bookings.confirm-by-link', [
-            'token' => $this->booking->token,
-            'action' => 'reject',
-        ]);
-
-        $contact = $this->booking->customer_phone ?? $this->booking->customer_email ?? '—';
-
-        $mail = (new MailMessage)
+        return BrandedMailMessage::for($this->booking->tenant ?? $this->booking->slot->worker->tenant)
             ->subject(__("{$t}.subject", ['name' => $this->booking->customer_name]))
+            ->status(BookingStatus::Pending)
             ->greeting(__("{$t}.greeting"))
             ->line(__("{$t}.line"))
-            ->line(__("{$t}.customer", ['name' => $this->booking->customer_name]))
-            ->line(__("{$t}.contact", ['contact' => $contact]))
-            ->line(__("{$t}.worker", ['name' => $worker->name]));
-
-        if ($this->booking->service) {
-            $mail->line(__("{$t}.service", ['name' => $this->booking->service->labelWithPrice()]));
-        }
-
-        $mail->line(__("{$t}.date", ['date' => $slot->date->format('d.m.Y')]))
-            ->line(__("{$t}.time", ['start' => substr($this->booking->start_time, 0, 5), 'end' => substr($this->booking->end_time, 0, 5)]));
-
-        if ($this->booking->note) {
-            $mail->line(__("{$t}.note", ['note' => $this->booking->note]));
-        }
-
-        return $mail
+            ->bookingDetails($this->booking, withCustomer: true)
             ->action(__("{$t}.action_confirm"), $confirmUrl)
-            ->line('['.__("{$t}.action_reject").']('.$rejectUrl.')')
-            ->salutation(__("{$t}.salutation"));
+            ->secondaryAction(__("{$t}.action_reject"), $rejectUrl);
     }
 }
