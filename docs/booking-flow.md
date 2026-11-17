@@ -17,7 +17,16 @@ to su **dva termina** sa različitim `slot_id`. Zato `slot_id` jednoznačno odre
 
 Termini istog radnika se ne smeju preklapati. Backend odbija novi termin koji se preklapa sa postojećim
 terminom tog radnika istog dana (422); dodirivanje (09:00–10:00 i 10:00–11:00) je dozvoljeno.
-Generator termina u adminu (`booking-fe/src/lib/slotGenerator.ts`) takve termine unapred preskače.
+Generator termina u adminu (`booking-fe/src/lib/slotGenerator.ts`) takve termine unapred preskače, a
+grupno pravljenje (`POST /api/slots/bulk`) ih preskače i vraća koliko ih je preskočilo.
+
+Termini mogu nastajati i iz **rasporeda radnika** (`worker_schedules`, `PUT /api/workers/{id}/schedule`):
+dani, radno vreme, dužina termina i pauze. Termini se odmah prave za 4 nedelje unapred, a komanda
+`slots:extend-schedules` ih svakog dana dopunjuje. Promena rasporeda zamenjuje buduće slobodne termine
+starog rasporeda (bez rezervacije, neblokirane); ručni termini ostaju. Detalji su u `api_doc.md`.
+
+Termin može biti **blokiran** (`slots.is_blocked`, `PATCH /api/slots/{id}`): ostaje u kalendaru, ali se ne
+nudi kupcima i ne ulazi u računanje slobodnih vremena. Rezervacije koje su već u njemu ostaju.
 
 ## Šta rezervacija uvek ima
 
@@ -38,7 +47,7 @@ Rezervacije bez usluge više ne nastaju. Stari redovi u bazi mogu imati `service
 
 `app/Services/Slot/SlotAvailabilityService.php`, za jednog radnika i trajanje usluge:
 
-1. Termini radnika za isti dan se spajaju u blokove (08:00–08:30 + 08:30–09:00 = 08:00–09:00), pa duža usluga može da pređe preko više termina.
+1. Neblokirani termini radnika za isti dan se spajaju u blokove (08:00–08:30 + 08:30–09:00 = 08:00–09:00), pa duža usluga može da pređe preko više termina.
 2. Od blokova se oduzimaju aktivne rezervacije (`pending` i `confirmed`). Otkazane i odbijene ne zauzimaju vreme.
 3. Kao početak se nude: početak svakog termina i kraj svake aktivne rezervacije. Vreme se nudi samo ako od tog trenutka ima dovoljno slobodnog vremena za celu uslugu. Primer: posle usluge od 40 min u 08:00 nudi se 08:40 za uslugu od 20 min.
 4. Za današnji dan se ne nude vremena koja su već prošla.
@@ -105,11 +114,19 @@ Pregled i otkazivanje po tokenu. Otkazati se može rezervacija koja čeka potvrd
 
 ## Posle slanja
 
-- **Status:** `pending`, ili odmah `confirmed` ako firma ima uključeno automatsko odobravanje (`client_profiles.auto_confirm_bookings`).
-- **Potvrda i odbijanje:** vlasnik potvrđuje ili odbija rezervaciju koja čeka potvrdu, u adminu (`PATCH /api/bookings/{token}/confirm|reject`) ili iz mejla. Link iz mejla (potpisan, važi 7 dana) samo otvara stranicu `/bookings/{token}/review` sa podacima i dugmićima; akcija se izvršava tek klikom (POST), da je programi koji skeniraju linkove u mejlovima ne bi izvršili sami. Stari linkovi (`/api/bookings/{token}/confirm-by-link`) samo vode na tu stranicu. Odbijena rezervacija oslobađa vreme.
+- **Režim potvrde** (`client_profiles.confirmation_mode`, enum `ConfirmationMode`, bira vlasnik u podešavanjima):
+  - `owner` (podrazumevano): rezervacija je `pending`, zahtev za potvrdu dobija vlasnik;
+  - `worker`: rezervacija je `pending`, zahtev dobija radnik kod koga je zakazana (radnik bez emaila nema nalog, pa tada vlasnik); potvrditi, odbiti i pomeriti sme taj radnik i vlasnik;
+  - `auto`: rezervacija je odmah `confirmed`.
+
+  Staro polje `auto_confirm_bookings` ostaje radi kompatibilnosti i uvek odgovara `confirmation_mode = auto` (sinhronizuje ga `ClientProfile`).
+- **Potvrda i odbijanje:** vlasnik (ili radnik, u režimu `worker`) potvrđuje ili odbija rezervaciju koja čeka potvrdu, u adminu (`PATCH /api/bookings/{token}/confirm|reject`) ili iz mejla. Link iz mejla (potpisan, važi 7 dana) samo otvara stranicu `/bookings/{token}/review` sa podacima i dugmićima; akcija se izvršava tek klikom (POST), da je programi koji skeniraju linkove u mejlovima ne bi izvršili sami. Stari linkovi (`/api/bookings/{token}/confirm-by-link`) samo vode na tu stranicu. Odbijena rezervacija oslobađa vreme.
+- **Pomeranje:** `PATCH /api/bookings/{token}/reschedule` sa `slot_id` i `start_time`. Za razliku od zakazivanja, vreme ne mora biti jedan od ponuđenih početaka: dovoljno je da usluga stane u slobodno vreme od tog trenutka (`SlotAvailabilityService::timeAt`), pri čemu staro vreme iste rezervacije ne smeta. Status se ne menja, kupac dobija obaveštenje. 
+- **Pomeranje od strane kupca:** `PATCH /api/bookings/{token}/customer-reschedule`, sa stranice `/manage/{token}`. Kupac bira samo među ponuđenim vremenima (kao pri zakazivanju), najkasnije `client_profiles.reschedule_cutoff_hours` sati pre početka (podrazumevano 6, podešava vlasnik). U režimima `owner` i `worker` rezervacija ponovo čeka potvrdu i zahtev ide onome ko potvrđuje (mejl „Kupac je pomerio rezervaciju“); u režimu `auto` ostaje potvrđena.
 - **Obaveštenja** (`BookingNotifier`, klase u `app/Notifications`):
   - kupac dobija mejl kad zakaže (čeka potvrdu) i kad otkaže; kad vlasnik potvrdi ili odbije, dobija push i mejl (mejl samo ako je ostavio email);
-  - vlasnik dobija mejl, obaveštenje u adminu i push, za novu rezervaciju (na čekanju ili odmah potvrđenu);
+  - vlasnik dobija mejl, obaveštenje u adminu i push za novu rezervaciju (na čekanju ili odmah potvrđenu); u režimu `worker` zahtev za potvrdu umesto njega dobija radnik;
+  - kupac dobija push i mejl kad mu se rezervacija pomeri;
   - jezik mejla prati jezik kupca, odnosno firme.
 - **„Vaše rezervacije“:** token se pamti u `localStorage` pregledača (`booking-fe/src/lib/myBookings.ts`) i prikazuje se na početnoj strani sajta firme. Iz pregledača se briše tek kad je rezervacija prošla, otkazana, odbijena ili je server ne prepoznaje (404). Na grešku mreže ostaje. Na drugom uređaju kupac koristi link iz mejla.
 - **Upravljanje:** kupac rezervaciju vidi i otkazuje na `/manage/{token}` (frontend) ili preko linka iz mejla.

@@ -36,6 +36,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property-read ?Tenant $tenant
  * @property-read ?User $client
  * @property-read ?ClientProfile $clientProfile
+ * @property-read ?WorkerSchedule $workerSchedule
  * @property-read ?WorkerProfile $workerProfile
  */
 #[Fillable(['name', 'email', 'password', 'role', 'client_id', 'can_edit_slots', 'is_suspended', 'tenant_id', 'invite_token', 'google_id'])]
@@ -122,6 +123,14 @@ class User extends Authenticatable implements HasLocalePreference
     public function clientProfile(): HasOne
     {
         return $this->hasOne(ClientProfile::class);
+    }
+
+    /**
+     * @return HasOne<WorkerSchedule, $this>
+     */
+    public function workerSchedule(): HasOne
+    {
+        return $this->hasOne(WorkerSchedule::class, 'worker_id');
     }
 
     /**

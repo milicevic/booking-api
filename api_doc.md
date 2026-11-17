@@ -166,9 +166,37 @@ Ažuriranje workera. Sva polja su opcionalna.
 }
 ```
 
+Radnik dobija nalog samo preko pozivnice na email:
+- Novi ili promenjen `email` radnika koji još nema nalog (nije postavio lozinku niti se prijavio Google-om) šalje novu pozivnicu, a stara prestaje da važi. `email: null` tada poništava pozivnicu.
+- Radniku koji već ima nalog promena emaila ne šalje pozivnicu (prijavljuje se novim emailom), a brisanje emaila vraća 422.
+
 **Response 200:** ažurirani worker objekat.
 
 **Response 403:** ako worker ne pripada klijentu.
+
+**Response 422:** brisanje emaila radniku koji već ima nalog.
+
+---
+
+### GET | PUT | DELETE /workers/{id}/schedule
+
+**Auth required.** Stalni raspored radnika. Sme vlasnik, a radnik samo svoj i uz `can_edit_slots`.
+
+PUT (isto telo kao `POST /slots/bulk`, bez radnika i datuma):
+```json
+{ "weekdays": [1, 2, 3, 4, 5], "start": "09:00", "end": "17:00", "slot_duration": 30, "breaks": [{ "start": "12:00", "end": "12:30" }] }
+```
+
+- Odmah pravi termine za narednih 4 nedelje (`weeks_ahead`), a komanda `slots:extend-schedules` (svaki dan u 01:00) ih dopunjuje dan po dan, samo za firme sa važećom pretplatom i radnike koji nisu suspendovani.
+- Pri promeni rasporeda brišu se budući termini starog rasporeda koji nemaju rezervaciju i nisu blokirani, pa se prave novi. Ručni termini, blokirani i oni sa rezervacijom ostaju.
+- Termin koji je vlasnik obrisao ne nastaje ponovo (komanda pravi samo dane posle `generated_until`).
+- DELETE: raspored prestaje da pravi termine, postojeći termini ostaju.
+
+**Response 200 (PUT):**
+```json
+{ "worker_id": 2, "weekdays": [1, 2, 3, 4, 5], "start": "09:00", "end": "17:00", "slot_duration": 30, "breaks": [...], "weeks_ahead": 4, "generated_until": "2027-01-03", "updated_at": "...", "generated": { "created": 280, "skipped": 0, "removed": 0 } }
+```
+GET vraća raspored ili `null`.
 
 ---
 
@@ -219,7 +247,13 @@ Briše workera. Soft delete ne postoji — trajan bris.
 
 ### GET /slots
 
-**Auth required.** Lista svih slotova klijenta (uključuje i zauzete).
+**Auth required.** Termini koje korisnik sme da vidi (vlasnik: svi njegovi radnici, radnik: samo svoji), uključujući zauzete i blokirane.
+
+| Query      | Napomena |
+|------------|----------|
+| from, to   | `Y-m-d`, opseg datuma (uključivo) |
+| worker_id  | samo jedan radnik (ne može da proširi vidljivi skup) |
+| per_page   | 1–500; ako je zadat, odgovor je straničen (`data`, `links`, `meta`), inače običan niz |
 
 **Response 200:**
 ```json
@@ -231,6 +265,7 @@ Briše workera. Soft delete ne postoji — trajan bris.
     "start_time": "09:00:00",
     "end_time": "09:30:00",
     "is_available": false,
+    "is_blocked": false,
     "worker": { ... },
     "booking": { ... }
   }
@@ -276,13 +311,48 @@ Briše workera. Soft delete ne postoji — trajan bris.
 
 ---
 
+### POST /slots/bulk
+
+**Auth required.** Grupno pravljenje termina u jednoj transakciji (onboarding, generator).
+
+```json
+{
+  "worker_id": 2,
+  "date_from": "2026-12-07",
+  "date_to": "2026-12-31",
+  "weekdays": [1, 2, 3, 4, 5],
+  "start": "09:00",
+  "end": "17:00",
+  "slot_duration": 30,
+  "breaks": [{ "start": "12:00", "end": "12:30" }]
+}
+```
+
+- `weekdays`: 1 = ponedeljak … 7 = nedelja. Termini idu redom od `start`; termin koji seče pauzu se ne pravi (isto kao `lib/slotGenerator.ts`).
+- Termin koji se preklapa sa postojećim terminom radnika se preskače; današnji termini koji su već počeli se ne prave.
+- Najviše 3000 termina po zahtevu (inače 422).
+
+**Response 201:** `{ "created": 120, "skipped": 4 }`
+
+**Response 403:** radnik ne pripada klijentu (radnik sme samo sebi, uz `can_edit_slots`).
+
+---
+
+### PATCH /slots/{id}
+
+**Auth required.** Blokiranje termina: `{ "is_blocked": true }`. Blokiran termin ostaje u kalendaru, ali se ne nudi na `/slots/available` i `/slots/times` i ne može se rezervisati; postojeće rezervacije u njemu ostaju.
+
+**Response 200:** termin. **403:** vlasnik drugog radnika, ili radnik bez `can_edit_slots` / tuđi termin.
+
+---
+
 ### DELETE /slots/{id}
 
 **Auth required.** Briše termin.
 
 **Response 204:** (no content)
 
-**Response 403:** ako slot ne pripada klijentu.
+**Response 403:** ako slot ne pripada klijentu (radnik sme svoj termin uz `can_edit_slots`).
 
 ---
 
@@ -348,6 +418,18 @@ Briše workera. Soft delete ne postoji — trajan bris.
 
 ---
 
+### PATCH /bookings/{token}/customer-reschedule
+
+**Javno (kupac, po tokenu).** `{ "slot_id": 12, "start_time": "14:00" }`.
+
+- Samo vremena koja se nude i pri zakazivanju (`/slots/times`); radnik mora da radi uslugu.
+- Najkasnije `reschedule_cutoff_hours` sati pre početka (podrazumevano 6, vlasnik menja u `PATCH /client/settings`). Rok i da li je pomeranje sada moguće vraćaju `GET /bookings/{token}` (`can_reschedule`, `reschedule_cutoff_hours`) i `/tenant/config`.
+- U režimima `owner` i `worker` rezervacija ponovo čeka potvrdu i zahtev ide vlasniku ili radniku; u režimu `auto` ostaje potvrđena.
+
+**Response 200:** rezervacija. **404:** token ne postoji ili rezervacija nije aktivna. **409:** vreme nije slobodno. **422:** prošao je rok ili radnik ne radi uslugu.
+
+---
+
 ### PATCH /bookings/{token}/cancel
 
 **Javni endpoint.** Korisnik otkazuje rezervaciju putem tokena.
@@ -365,7 +447,14 @@ Može se otkazati samo rezervacija sa statusom `confirmed`.
 
 ### GET /bookings
 
-**Auth required.** Lista svih rezervacija klijenta.
+**Auth required.** Rezervacije koje korisnik sme da vidi (vlasnik: svi njegovi radnici, radnik: samo svoje), uvek sa `slot.worker` i `service`.
+
+| Query      | Napomena |
+|------------|----------|
+| from, to   | `Y-m-d`, datum termina (uključivo) |
+| worker_id  | samo jedan radnik (ne može da proširi vidljivi skup) |
+| status     | `pending`, `confirmed`, `rejected`, `cancelled` |
+| per_page   | 1–200; ako je zadat, odgovor je straničen (`data`, `links`, `meta`), inače običan niz |
 
 **Response 200:**
 ```json
@@ -392,13 +481,23 @@ Može se otkazati samo rezervacija sa statusom `confirmed`.
 
 ---
 
-### PATCH /bookings/{token}/confirm
+### PATCH /bookings/{token}/confirm i /reject
 
-**Auth required.** Klijent ručno potvrđuje rezervaciju.
+**Auth required.** Potvrda ili odbijanje rezervacije koja čeka potvrdu. Sme vlasnik, a u režimu potvrde `worker` i radnik kod koga je rezervacija.
 
-**Response 200:** ažurirani booking objekat.
+**Response 200:** `{ "message": "..." }`. **403:** nema pravo. **404:** token ne postoji. **422:** rezervacija ne čeka potvrdu.
 
-**Response 404:** ako token ne postoji.
+---
+
+### PATCH /bookings/{token}/reschedule
+
+**Auth required.** Pomera aktivnu rezervaciju: `{ "slot_id": 12, "start_time": "15:00" }`.
+
+- Sme vlasnik (na termin bilo kog svog radnika koji radi tu uslugu), a u režimu `worker` i radnik kod koga je rezervacija (samo na svoj termin).
+- Usluga mora da stane u slobodno vreme od `start_time` (njeno staro vreme se ne računa kao zauzeto); vreme ne mora biti jedno od ponuđenih početaka. Provera u transakciji sa zaključanim danima radnika.
+- Status ostaje isti; kupac dobija push i mejl (`BookingRescheduledCustomer`).
+
+**Response 200:** rezervacija. **403:** nema pravo. **409:** vreme nije slobodno ili je prošlo. **422:** rezervacija nije aktivna ili radnik ne radi uslugu.
 
 ---
 

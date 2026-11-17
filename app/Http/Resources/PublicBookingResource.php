@@ -31,6 +31,9 @@ class PublicBookingResource extends JsonResource
             'customer_phone' => $this->customer_phone,
             'note' => $this->note,
             'created_at' => $this->created_at,
+            // Da li kupac sada sme sam da pomeri rezervaciju, i do koliko sati pre početka
+            'can_reschedule' => $this->whenLoaded('slot', fn () => $this->canBeRescheduledByCustomer()),
+            'reschedule_cutoff_hours' => $this->whenLoaded('slot', fn () => $this->rescheduleCutoffHours()),
             'slot' => $this->whenLoaded('slot', fn () => PublicSlotResource::make($this->slot)),
             'service' => $this->whenLoaded('service', fn () => ServiceResource::make($this->service)),
         ];

@@ -30,6 +30,12 @@ return [
     'booking_confirmed' => 'Rezervacija potvrđena.',
     'booking_rejected' => 'Rezervacija odbijena.',
     'booking_not_accessible' => 'Nemate pristup ovoj rezervaciji.',
+    'worker_email_required_for_account' => 'Radnik već ima nalog, pa mu je email potreban za prijavu.',
+    'slot_not_accessible' => 'Nemate pristup ovom terminu.',
+    'booking_not_active' => 'Pomeriti se može samo rezervacija koja čeka potvrdu ili je potvrđena.',
+    'reschedule_too_late' => 'Termin se može promeniti najkasnije :hours h pre početka.',
+    'booking_rescheduled' => 'Rezervacija je pomerena.',
+    'slots_bulk_too_many' => 'Previše termina odjednom (najviše :max). Skratite period.',
     'invalid_action' => 'Neispravna akcija.',
     'invalid_link' => 'Link je nevažeći ili je istekao.',
 

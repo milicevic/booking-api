@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\SlotController;
 use App\Http\Controllers\Api\SuperadminController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\WorkerController;
+use App\Http\Controllers\Api\WorkerScheduleController;
 use Illuminate\Support\Facades\Route;
 
 // Platform-level rute — bez tenant konteksta
@@ -61,6 +62,8 @@ Route::middleware(['resolve.tenant', 'check.subscription'])->group(function () {
     Route::post('/bookings', [BookingController::class, 'store'])->middleware('throttle:bookings');
     Route::get('/bookings/{token}', [BookingController::class, 'show']);
     Route::patch('/bookings/{token}/cancel', [BookingController::class, 'cancel']);
+    // Kupac sam pomera rezervaciju; /bookings/{token}/reschedule je za vlasnika i radnika (auth)
+    Route::patch('/bookings/{token}/customer-reschedule', [BookingController::class, 'customerReschedule'])->middleware('throttle:bookings');
     Route::post('/auth/accept-invite', [AuthController::class, 'acceptInvite']);
 });
 
@@ -73,10 +76,15 @@ Route::middleware(['resolve.tenant:optional', 'check.subscription', 'auth:sanctu
     Route::patch('/workers/{worker}/profile', [WorkerController::class, 'updateProfile']);
     Route::post('/workers/{worker}/photo', [WorkerController::class, 'uploadPhoto']);
     Route::delete('/workers/{worker}/photo', [WorkerController::class, 'deletePhoto']);
-    Route::apiResource('slots', SlotController::class);
+    Route::get('/workers/{worker}/schedule', [WorkerScheduleController::class, 'show']);
+    Route::put('/workers/{worker}/schedule', [WorkerScheduleController::class, 'update']);
+    Route::delete('/workers/{worker}/schedule', [WorkerScheduleController::class, 'destroy']);
+    Route::post('/slots/bulk', [SlotController::class, 'bulkStore']);
+    Route::apiResource('slots', SlotController::class)->except('show');
     Route::get('/bookings', [BookingController::class, 'index']);
     Route::patch('/bookings/{token}/confirm', [BookingController::class, 'confirm']);
     Route::patch('/bookings/{token}/reject', [BookingController::class, 'reject']);
+    Route::patch('/bookings/{token}/reschedule', [BookingController::class, 'reschedule']);
 
     Route::patch('/client/settings', [ClientController::class, 'updateSettings']);
     Route::post('/client/deploy-request', [ClientController::class, 'deployRequest']);

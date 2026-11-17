@@ -3,274 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
     <title>{{ __('manage.title') }}</title>
+    @php
+        // Isti izgled kao mejlovi i aplikacija: brend firme, bela kartica, statusi u bojama iz admina
+        $brand = \App\Notifications\Messages\BrandedMailMessage::brand($booking->tenant ?? $booking->slot->worker->tenant);
+        $tones = [
+            'pending' => ['#fef3c7', '#92400e'],
+            'confirmed' => ['#dcfce7', '#166534'],
+            'cancelled' => ['#f3f4f6', '#4b5563'],
+            'rejected' => ['#f3f4f6', '#4b5563'],
+        ];
+        [$statusBg, $statusColor] = $tones[$booking->status->value] ?? $tones['cancelled'];
+    @endphp
     <style>
         *, *::before, *::after { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #f0fdf4;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: #374151;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px 16px;
-        }
-
-        .card {
-            background: #ffffff;
-            border: 1px solid #bbf7d0;
-            border-radius: 12px;
-            box-shadow: 0 4px 24px rgba(21, 128, 61, 0.08);
-            width: 100%;
-            max-width: 480px;
-            overflow: hidden;
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-            padding: 28px 32px;
-            text-align: center;
-        }
-
-        .card-header .icon {
-            font-size: 40px;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .card-header h1 {
-            color: #ffffff;
-            font-size: 20px;
-            font-weight: 700;
-            margin: 0 0 4px;
-        }
-
-        .card-header p {
-            color: #dcfce7;
-            font-size: 14px;
-            margin: 0;
-        }
-
-        .card-body {
-            padding: 28px 32px;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            border-radius: 99px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 24px;
-        }
-
-        .status-pending   { background: #fef9c3; color: #854d0e; }
-        .status-confirmed { background: #dcfce7; color: #15803d; }
-        .status-cancelled { background: #fee2e2; color: #991b1b; }
-        .status-rejected  { background: #fee2e2; color: #991b1b; }
-
-        .detail-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0fdf4;
-        }
-
-        .detail-row:last-of-type {
-            border-bottom: none;
-        }
-
-        .detail-icon {
-            font-size: 18px;
-            width: 24px;
-            text-align: center;
-            flex-shrink: 0;
-            margin-top: 1px;
-        }
-
-        .detail-label {
-            font-size: 12px;
-            color: #6b7280;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 2px;
-        }
-
-        .detail-value {
-            font-size: 15px;
-            font-weight: 600;
-            color: #111827;
-        }
-
-        .note-box {
-            background: #f0fdf4;
-            border-left: 3px solid #16a34a;
-            border-radius: 0 6px 6px 0;
-            padding: 12px 16px;
-            margin-top: 20px;
-        }
-
-        .note-box .note-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #16a34a;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin-bottom: 4px;
-        }
-
-        .note-box p {
-            font-size: 14px;
-            color: #374151;
-            margin: 0;
-            line-height: 1.5;
-        }
-
-        .alert {
-            border-radius: 8px;
-            padding: 14px 16px;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .alert-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-
-        .card-footer {
-            padding: 0 32px 28px;
-        }
-
-        .btn-cancel {
-            display: block;
-            width: 100%;
-            padding: 14px;
-            background: #ffffff;
-            color: #dc2626;
-            border: 1.5px solid #fca5a5;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            transition: background 0.15s, border-color 0.15s;
-        }
-
-        .btn-cancel:hover {
-            background: #fff1f2;
-            border-color: #dc2626;
-        }
-
-        .cancelled-notice {
-            text-align: center;
-            padding: 14px;
-            background: #fafafa;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #6b7280;
-        }
-
-        .powered-by {
-            text-align: center;
-            padding: 20px 0 4px;
-            font-size: 12px;
-            color: #9ca3af;
-        }
+        body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 32px 16px;
+               background: #f9fafb; color: #111827; line-height: 1.5;
+               font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+        .brand { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 600; color: #111827; text-decoration: none; }
+        .brand img, .brand-mark { width: 40px; height: 40px; border-radius: 10px; object-fit: contain; }
+        .brand-mark { display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600;
+                      background: {{ $brand['color'] }}; color: {{ $brand['foreground'] }}; }
+        .card { width: 100%; max-width: 480px; background: #fff; border: 1px solid #f3f4f6; border-radius: 16px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, .05); padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+        h1 { font-size: 24px; line-height: 1.25; font-weight: 600; margin: 0; }
+        .muted { color: #4b5563; font-size: 15px; margin: 0; }
+        .status { align-self: flex-start; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+                  background: {{ $statusBg }}; color: {{ $statusColor }}; }
+        .label { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #4b5563; margin: 0; }
+        .rows { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+        .row { display: flex; justify-content: space-between; gap: 16px; }
+        .row span:first-child { color: #4b5563; }
+        .row span:last-child { font-weight: 500; text-align: right; }
+        .note { padding: 12px 14px; border-radius: 12px; border: 1px solid #f3f4f6; background: #f9fafb; font-size: 14px; color: #374151; }
+        .alert { padding: 14px 16px; border-radius: 12px; font-size: 14px; font-weight: 500; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .notice { font-size: 14px; color: #4b5563; border-top: 1px solid #f3f4f6; padding-top: 16px; }
+        button { width: 100%; min-height: 44px; padding: 10px 16px; border-radius: 8px; font: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+                 background: #fff; color: #991b1b; border: 1px solid #fca5a5; }
+        button:hover { background: #fef2f2; }
+        button:focus-visible { outline: 2px solid {{ $brand['color'] }}; outline-offset: 2px; }
+        .footer { font-size: 13px; color: #4b5563; margin: 0; }
     </style>
 </head>
 <body>
-    <div>
-        <div class="card">
-            <div class="card-header">
-                <span class="icon">📅</span>
-                <h1>{{ __('manage.title') }}</h1>
-                <p>{{ $booking->customer_name }}</p>
-            </div>
+    <a class="brand" href="{{ $brand['url'] }}">
+        @if ($brand['logo'])
+            <img src="{{ $brand['logo'] }}" alt="">
+        @else
+            <span class="brand-mark" aria-hidden="true">{{ mb_strtoupper(mb_substr($brand['name'], 0, 1)) }}</span>
+        @endif
+        {{ $brand['name'] }}
+    </a>
 
-            <div class="card-body">
-
-                @if(session('success'))
-                    <div class="alert alert-success">
-                        <span>✓</span> {{ session('success') }}
-                    </div>
-                @endif
-
-                <span class="status-badge status-{{ $booking->status->value }}">
-                    {{ __("manage.status.{$booking->status->value}") }}
-                </span>
-
-                <div class="detail-row">
-                    <span class="detail-icon">👤</span>
-                    <div>
-                        <div class="detail-label">{{ __('manage.worker') }}</div>
-                        <div class="detail-value">{{ $booking->slot->worker->name }}</div>
-                    </div>
-                </div>
-
-                @if ($booking->service)
-                    <div class="detail-row">
-                        <span class="detail-icon">✂️</span>
-                        <div>
-                            <div class="detail-label">{{ __('manage.service') }}</div>
-                            <div class="detail-value">{{ $booking->service->labelWithPrice() }}</div>
-                        </div>
-                    </div>
-                @endif
-
-                <div class="detail-row">
-                    <span class="detail-icon">📆</span>
-                    <div>
-                        <div class="detail-label">{{ __('manage.date') }}</div>
-                        <div class="detail-value">{{ $booking->slot->date->format(__('manage.date_format')) }}</div>
-                    </div>
-                </div>
-
-                <div class="detail-row">
-                    <span class="detail-icon">🕐</span>
-                    <div>
-                        <div class="detail-label">{{ __('manage.time') }}</div>
-                        <div class="detail-value">{{ substr($booking->start_time, 0, 5) }} – {{ substr($booking->end_time, 0, 5) }}</div>
-                    </div>
-                </div>
-
-                @if($booking->note)
-                    <div class="note-box">
-                        <div class="note-label">{{ __('manage.note') }}</div>
-                        <p>{{ $booking->note }}</p>
-                    </div>
-                @endif
-
-            </div>
-
-            <div class="card-footer">
-                @if($booking->status->isActive())
-                    <form method="POST" action="{{ route('booking.cancel', $booking->token) }}"
-                          onsubmit="return confirm(@js(__('manage.cancel_confirm')))">
-                        @csrf
-                        <button type="submit" class="btn-cancel">
-                            {{ __('manage.cancel_button') }}
-                        </button>
-                    </form>
-                @else
-                    <div class="cancelled-notice">
-                        {{ __("manage.status_notice.{$booking->status->value}") }}
-                    </div>
-                @endif
-            </div>
+    <main class="card">
+        <div>
+            <h1>{{ __('manage.title') }}</h1>
+            <p class="muted">{{ $booking->customer_name }}</p>
         </div>
 
-        <p class="powered-by">Booking App</p>
-    </div>
+        @if(session('success'))
+            <div class="alert" role="status">{{ session('success') }}</div>
+        @endif
+
+        <span class="status">{{ __("manage.status.{$booking->status->value}") }}</span>
+
+        <p class="label">{{ __('mail.details_title') }}</p>
+        <div class="rows">
+            <div class="row"><span>{{ __('manage.worker') }}</span><span>{{ $booking->slot->worker->name }}</span></div>
+            @if ($booking->service)
+                <div class="row"><span>{{ __('manage.service') }}</span><span>{{ $booking->service->labelWithPrice() }}</span></div>
+            @endif
+            <div class="row"><span>{{ __('manage.date') }}</span><span>{{ $booking->slot->date->format(__('manage.date_format')) }}</span></div>
+            <div class="row"><span>{{ __('manage.time') }}</span><span>{{ substr($booking->start_time, 0, 5) }} – {{ substr($booking->end_time, 0, 5) }}</span></div>
+        </div>
+
+        @if($booking->note)
+            <div class="note"><strong>{{ __('manage.note') }}:</strong> {{ $booking->note }}</div>
+        @endif
+
+        @if($booking->status->isActive())
+            <form method="POST" action="{{ route('booking.cancel', $booking->token) }}"
+                  onsubmit="return confirm(@js(__('manage.cancel_confirm')))">
+                @csrf
+                <button type="submit">{{ __('manage.cancel_button') }}</button>
+            </form>
+        @else
+            <p class="notice">{{ __("manage.status_notice.{$booking->status->value}") }}</p>
+        @endif
+    </main>
+
+    <p class="footer">{{ __('mail.footer') }}</p>
 </body>
 </html>

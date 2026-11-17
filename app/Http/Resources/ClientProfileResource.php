@@ -24,6 +24,9 @@ class ClientProfileResource extends JsonResource
             'business_name' => $this->business_name,
             'auto_confirm_bookings' => $this->auto_confirm_bookings,
             'customer_contact' => $this->customer_contact,
+            'confirmation_mode' => $this->confirmation_mode,
+            'reschedule_cutoff_hours' => $this->reschedule_cutoff_hours,
+            'onboarding_completed_at' => $this->onboarding_completed_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
