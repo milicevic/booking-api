@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Register;
 
+use App\Enums\BusinessType;
 use App\Http\Requests\Concerns\VerifiesCaptcha;
 use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,6 +27,7 @@ class RegisterRequest extends FormRequest
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
             'app_name' => ['required', 'string', 'max:255'],
+            'business_type' => ['nullable', Rule::enum(BusinessType::class)],
             'subdomain' => ['nullable', 'string', 'alpha_dash', 'max:63', 'unique:tenants,subdomain', Rule::notIn(Tenant::RESERVED_SUBDOMAINS)],
         ];
     }

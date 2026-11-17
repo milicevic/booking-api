@@ -3,6 +3,7 @@
 namespace App\Services\Worker;
 
 use App\Enums\UserRole;
+use App\Exceptions\DomainException;
 use App\Models\User;
 use App\Notifications\WorkerInvite;
 use App\Repositories\Contracts\ServiceRepositoryInterface;
@@ -56,11 +57,34 @@ class WorkerService implements WorkerServiceInterface
 
     public function update(User $worker, array $data): User
     {
-        $worker->update(array_filter([
+        $attributes = array_filter([
             'name' => $data['name'] ?? null,
-            'email' => array_key_exists('email', $data) ? $data['email'] : $worker->email,
             'can_edit_slots' => $data['can_edit_slots'] ?? null,
-        ], fn (mixed $value): bool => $value !== null));
+        ], fn (mixed $value): bool => $value !== null);
+
+        $emailChanged = array_key_exists('email', $data) && $data['email'] !== $worker->email;
+
+        // Bez emaila radnik ne bi mogao da se prijavi na nalog koji već koristi
+        if ($emailChanged && ! $data['email'] && $this->hasAccount($worker)) {
+            throw DomainException::unprocessable(__('messages.worker_email_required_for_account'));
+        }
+
+        // Pozivnica važi samo za radnika koji još nema nalog; novi email je poništava i šalje se nova
+        $sendsInvite = $emailChanged && ! $this->hasAccount($worker);
+
+        if ($emailChanged) {
+            $attributes['email'] = $data['email'];
+        }
+
+        if ($sendsInvite) {
+            $attributes['invite_token'] = $data['email'] ? Str::uuid()->toString() : null;
+        }
+
+        $worker->update($attributes);
+
+        if ($sendsInvite && $worker->invite_token) {
+            $worker->notify(new WorkerInvite($this->currentTenant->require(), $worker->invite_token));
+        }
 
         $profile = array_intersect_key($data, array_flip(['phone', 'bio']));
 
@@ -69,6 +93,12 @@ class WorkerService implements WorkerServiceInterface
         }
 
         return ($worker->fresh() ?? $worker)->load('workerProfile');
+    }
+
+    /** Radnik je aktivirao nalog: postavio lozinku preko pozivnice ili se prijavio Google-om. */
+    private function hasAccount(User $worker): bool
+    {
+        return $worker->password !== null || $worker->google_id !== null;
     }
 
     public function delete(User $worker): void

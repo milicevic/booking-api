@@ -4,6 +4,7 @@ namespace App\Services\Booking;
 
 use App\Enums\BookingLinkAction;
 use App\Enums\BookingStatus;
+use App\Enums\ConfirmationMode;
 use App\Enums\CustomerContact;
 use App\Exceptions\DomainException;
 use App\Models\Booking;
@@ -17,6 +18,8 @@ use App\Services\Contracts\BookingNotifierInterface;
 use App\Services\Contracts\BookingServiceInterface;
 use App\Services\Contracts\SlotAvailabilityServiceInterface;
 use App\Services\Contracts\VisibleWorkersResolverInterface;
+use Closure;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -31,9 +34,9 @@ class BookingService implements BookingServiceInterface
         private readonly VisibleWorkersResolverInterface $visibleWorkers,
     ) {}
 
-    public function listFor(User $user, ?int $clientId = null): Collection
+    public function listFor(User $user, ?int $clientId = null, array $filters = [], ?int $perPage = null): Collection|LengthAwarePaginator
     {
-        return $this->bookings->forWorkers($this->visibleWorkers->workerIdsFor($user, $clientId));
+        return $this->bookings->forWorkers($this->visibleWorkers->workerIdsFor($user, $clientId), $filters, $perPage);
     }
 
     public function create(array $data): Booking
@@ -70,7 +73,7 @@ class BookingService implements BookingServiceInterface
 
         $booking->load('slot.worker.client.clientProfile');
 
-        if ($booking->slot->worker->client?->clientProfile?->auto_confirm_bookings) {
+        if ($booking->confirmationMode() === ConfirmationMode::Auto) {
             $booking->update(['status' => BookingStatus::Confirmed]);
         }
 
@@ -111,6 +114,84 @@ class BookingService implements BookingServiceInterface
 
         $this->changeStatusAndFreeTime($booking, BookingStatus::Rejected);
         $this->notifier->rejected($booking);
+    }
+
+    public function reschedule(Booking $booking, Slot $target, string $startTime): Booking
+    {
+        if (! in_array($booking->status, BookingStatus::active(), true)) {
+            throw DomainException::unprocessable(__('messages.booking_not_active'));
+        }
+
+        // Vlasnik i radnik nisu ograničeni na ponuđene početke: dovoljno je da usluga stane u slobodno vreme
+        $this->move($booking, $target, fn (int $duration, string $date): ?array => $this->availability
+            ->timeAt($target->worker_id, $duration, $date, "{$startTime}:00", $booking->id));
+
+        $this->notifier->rescheduled($booking);
+
+        return $booking;
+    }
+
+    public function rescheduleByCustomer(string $token, int $slotId, string $startTime): Booking
+    {
+        $booking = $this->bookings->findActiveByTokenOrFail($token, ['slot.worker.client.clientProfile', 'service']);
+
+        if (! $booking->canBeRescheduledByCustomer()) {
+            throw DomainException::unprocessable(__('messages.reschedule_too_late', ['hours' => $booking->rescheduleCutoffHours()]));
+        }
+
+        $target = $this->slots->findOrFail($slotId);
+        // Novo vreme ponovo potvrđuje vlasnik ili radnik, osim u režimu "auto"
+        $status = $booking->confirmationMode() === ConfirmationMode::Auto ? BookingStatus::Confirmed : BookingStatus::Pending;
+
+        // Kupac bira samo među ponuđenim vremenima, kao pri zakazivanju
+        $this->move($booking, $target, fn (int $duration, string $date): ?array => collect(
+            $this->availability->bookableTimes($target->worker_id, $duration, $date, $booking->id)
+        )->first(fn (array $time): bool => $time['start_time'] === "{$startTime}:00"), $status);
+
+        $this->notifier->rescheduledByCustomer($booking);
+
+        return $booking;
+    }
+
+    /**
+     * Premešta rezervaciju na vreme koje vrati $findTime (trajanje, datum), u transakciji sa zaključanim
+     * danima oba radnika, i osvežava dostupnost starog i novog dana.
+     *
+     * @param  Closure(int, string): ?array{slot_id: int, worker_id: int, date: string, start_time: string, end_time: string}  $findTime
+     */
+    private function move(Booking $booking, Slot $target, Closure $findTime, ?BookingStatus $status = null): void
+    {
+        $from = [$booking->slot->worker_id, $booking->slot->date->toDateString()];
+        $to = [$target->worker_id, $target->date->toDateString()];
+
+        DB::transaction(function () use ($booking, $target, $findTime, $status, $from, $to): void {
+            // Isti redosled zaključavanja kod svih poziva, da se dve transakcije ne zaglave jedna na drugoj
+            collect([$from, $to])
+                ->unique(fn (array $day): string => implode('|', $day))
+                ->sortBy(fn (array $day): string => implode('|', $day))
+                ->each(fn (array $day) => $this->slots->lockWorkerDay($day[0], $day[1]));
+
+            $duration = $booking->service_id
+                ? $this->resolveService($target, $booking->service_id)->duration_minutes
+                : Slot::toMinutes($booking->end_time) - Slot::toMinutes($booking->start_time);
+
+            $time = $findTime($duration, $to[1]) ?? throw DomainException::conflict(__('messages.slot_unavailable'));
+
+            $booking->update(array_filter([
+                'slot_id' => $time['slot_id'],
+                'start_time' => $time['start_time'],
+                'end_time' => $time['end_time'],
+                'status' => $status,
+            ]));
+
+            $this->availability->refreshAvailability($from[0], $from[1]);
+
+            if ($to !== $from) {
+                $this->availability->refreshAvailability($to[0], $to[1]);
+            }
+        });
+
+        $booking->unsetRelation('slot')->load(['slot.worker.client.clientProfile', 'service']);
     }
 
     public function applyLinkAction(string $token, BookingLinkAction $action): Booking

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BookingStatus;
+use App\Enums\ConfirmationMode;
 use App\Models\Concerns\BelongsToTenant;
 use Database\Factories\BookingFactory;
 use Illuminate\Contracts\Translation\HasLocalePreference;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
@@ -56,6 +58,32 @@ class Booking extends Model implements HasLocalePreference
         return [
             'status' => BookingStatus::class,
         ];
+    }
+
+    /** Početak rezervacije po lokalnom vremenu salona. */
+    public function startsAt(): Carbon
+    {
+        return Carbon::parse($this->slot->date->toDateString().' '.$this->start_time);
+    }
+
+    /** Koliko sati pre početka kupac najkasnije sme sam da pomeri rezervaciju (podešava vlasnik). */
+    public function rescheduleCutoffHours(): int
+    {
+        return $this->slot->worker->client?->clientProfile->reschedule_cutoff_hours
+            ?? ClientProfile::DEFAULT_RESCHEDULE_CUTOFF_HOURS;
+    }
+
+    /** Kupac sme da pomeri aktivnu rezervaciju dok do početka ima više od roka. */
+    public function canBeRescheduledByCustomer(): bool
+    {
+        return in_array($this->status, BookingStatus::active(), true)
+            && now()->addHours($this->rescheduleCutoffHours())->lte($this->startsAt());
+    }
+
+    /** Ko potvrđuje ovu rezervaciju, prema podešavanju vlasnika radnika iz termina. */
+    public function confirmationMode(): ConfirmationMode
+    {
+        return $this->slot->worker->client?->clientProfile->confirmation_mode ?? ConfirmationMode::Owner;
     }
 
     /** Stranica na sajtu firme na kojoj kupac vidi i otkazuje rezervaciju. */

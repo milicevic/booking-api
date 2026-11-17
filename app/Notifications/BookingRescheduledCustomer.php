@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Notifications;
+
+use App\Models\Booking;
+use App\Notifications\Messages\BrandedMailMessage;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
+
+/**
+ * Vlasnik ili radnik je pomerio rezervaciju; kupac dobija novi termin.
+ */
+class BookingRescheduledCustomer extends Notification
+{
+    public function __construct(
+        private Booking $booking
+    ) {}
+
+    /**
+     * @return list<string>
+     */
+    public function via(object $notifiable): array
+    {
+        $channels = [WebPushChannel::class];
+        if ($notifiable->customer_email) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function toWebPush(object $notifiable, mixed $notification): WebPushMessage
+    {
+        $slot = $this->booking->slot;
+        $t = 'notifications.booking_rescheduled_customer_push';
+
+        return (new WebPushMessage)
+            ->title(__("{$t}.title"))
+            ->body(__("{$t}.body", [
+                'worker' => $slot->worker->name,
+                'date' => $slot->date->format('d.m.Y'),
+                'start' => substr($this->booking->start_time, 0, 5),
+            ]))
+            ->icon('/icon.png')
+            ->data(['url' => '/manage/'.$this->booking->token]);
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $t = 'notifications.booking_rescheduled_customer';
+
+        return BrandedMailMessage::for($this->booking->tenant ?? $this->booking->slot->worker->tenant)
+            ->subject(__("{$t}.subject"))
+            ->status($this->booking->status)
+            ->greeting(__("{$t}.greeting", ['name' => $this->booking->customer_name]))
+            ->line(__("{$t}.line1"))
+            ->bookingDetails($this->booking)
+            ->action(__("{$t}.action"), $this->booking->manageUrl())
+            ->line(__("{$t}.line2"));
+    }
+}

@@ -108,4 +108,13 @@ class CustomerContactTest extends TestCase
 
         $this->getJson('/api/tenant/config')->assertJsonPath('customer_contact', 'phone');
     }
+
+    public function test_tenant_config_tells_workers_who_confirms_bookings(): void
+    {
+        $this->getJson('/api/tenant/config')->assertJsonPath('confirmation_mode', 'owner');
+
+        $this->actingAs($this->client)->patchJson('/api/client/settings', ['confirmation_mode' => 'worker'])->assertOk();
+
+        $this->getJson('/api/tenant/config')->assertJsonPath('confirmation_mode', 'worker');
+    }
 }

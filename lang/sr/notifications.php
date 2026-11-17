@@ -34,6 +34,9 @@ return [
         'line' => 'Korisnik je zatražio rezervaciju. Potvrdite ili odbijte zahtev.',
         'action_confirm' => 'Potvrdi rezervaciju',
         'action_reject' => 'Odbij rezervaciju',
+        'subject_rescheduled' => 'Kupac je pomerio rezervaciju — :name',
+        'greeting_rescheduled' => 'Rezervacija je pomerena!',
+        'line_rescheduled' => 'Kupac je izabrao novi termin. Potvrdite ili odbijte rezervaciju.',
     ],
 
     'booking_confirmed_client' => [
@@ -41,6 +44,9 @@ return [
         'greeting' => 'Nova rezervacija potvrđena!',
         'line' => 'Automatski je potvrđena nova rezervacija.',
         'action' => 'Otvori kontrolnu tablu',
+        'subject_rescheduled' => 'Kupac je pomerio rezervaciju — :name',
+        'greeting_rescheduled' => 'Rezervacija je pomerena!',
+        'line_rescheduled' => 'Kupac je izabrao novi termin; rezervacija je automatski potvrđena.',
     ],
 
     'booking_rejected_customer' => [
@@ -83,6 +89,19 @@ return [
         'line2' => 'Slobodni termini su i dalje dostupni — možete da rezervišete novi.',
     ],
 
+    'booking_rescheduled_customer' => [
+        'subject' => 'Rezervacija je pomerena',
+        'greeting' => 'Zdravo, :name!',
+        'line1' => 'Vaša rezervacija je pomerena na novi termin:',
+        'action' => 'Pogledaj rezervaciju',
+        'line2' => 'Ako vam novi termin ne odgovara, možete otkazati rezervaciju preko linka iznad.',
+    ],
+
+    'booking_rescheduled_customer_push' => [
+        'title' => 'Rezervacija je pomerena',
+        'body' => 'Novi termin kod :worker: :date u :start.',
+    ],
+
     'booking_confirmed_customer_push' => [
         'title' => 'Rezervacija potvrđena ✓',
         'body' => 'Vaša rezervacija kod :worker dana :date u :start je potvrđena.',
@@ -96,11 +115,13 @@ return [
     'booking_pending_client_push' => [
         'title' => 'Nova rezervacija — :name',
         'body' => ':name je zatražio rezervaciju :date u :start kod :worker.',
+        'title_rescheduled' => 'Pomerena rezervacija — :name',
     ],
 
     'booking_confirmed_client_push' => [
         'title' => 'Rezervacija potvrđena — :name',
         'body' => 'Nova rezervacija za :name :date u :start je potvrđena.',
+        'title_rescheduled' => 'Pomerena rezervacija — :name',
     ],
 
     'worker_invite' => [

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Contracts\GoogleAuthServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Socialite\Contracts\Provider;
 use Laravel\Socialite\Contracts\User as GoogleUser;
@@ -68,7 +69,10 @@ class GoogleAuthController extends Controller
         try {
             /** @var GoogleUser $googleUser */
             $googleUser = $this->driver()->user();
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // Npr. invalid_client / redirect_uri_mismatch posle promene u Google konzoli
+            Log::warning('Google login failed: '.$e->getMessage());
+
             return $this->frontendRedirect($state['host'], ['error' => 'google_failed']);
         }
 

@@ -43,10 +43,11 @@ final class BrandedMailMessage extends MailMessage
     public function status(BookingStatus $status): static
     {
         $tones = [
-            'confirmed' => ['#dcfce7', '#15803d'],
-            'cancelled' => ['#fee2e2', '#b91c1c'],
-            'rejected' => ['#fee2e2', '#b91c1c'],
-            'pending' => ['#fef9c3', '#a16207'],
+            // Iste boje kao statusi u aplikaciji (BookingStatusBadge.vue)
+            'confirmed' => ['#dcfce7', '#166534'],
+            'cancelled' => ['#f3f4f6', '#4b5563'],
+            'rejected' => ['#f3f4f6', '#4b5563'],
+            'pending' => ['#fef3c7', '#92400e'],
         ];
         [$background, $color] = $tones[$status->value];
 

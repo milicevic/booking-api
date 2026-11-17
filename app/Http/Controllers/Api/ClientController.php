@@ -16,10 +16,7 @@ class ClientController extends Controller
     /** Ažurira podešavanja klijentskog profila */
     public function updateSettings(UpdateSettingsRequest $request, ClientServiceInterface $clients): UserResource
     {
-        /** @var array{auto_confirm_bookings?: bool, customer_contact?: string} $settings */
-        $settings = $request->validated();
-
-        return UserResource::make($clients->updateSettings($request->user(), $settings));
+        return UserResource::make($clients->updateSettings($request->user(), $request->settings()));
     }
 
     /** Klijent šalje zahtev za deploy (subdomena ili custom domena) */

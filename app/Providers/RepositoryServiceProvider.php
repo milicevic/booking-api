@@ -10,6 +10,7 @@ use App\Repositories\Contracts\SlotRepositoryInterface;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\Repositories\Contracts\UserLookupRepositoryInterface;
 use App\Repositories\Contracts\WorkerRepositoryInterface;
+use App\Repositories\Contracts\WorkerScheduleRepositoryInterface;
 use App\Repositories\Eloquent\EloquentBookingRepository;
 use App\Repositories\Eloquent\EloquentClientRepository;
 use App\Repositories\Eloquent\EloquentNotificationRepository;
@@ -18,6 +19,7 @@ use App\Repositories\Eloquent\EloquentSlotRepository;
 use App\Repositories\Eloquent\EloquentTenantRepository;
 use App\Repositories\Eloquent\EloquentUserLookupRepository;
 use App\Repositories\Eloquent\EloquentWorkerRepository;
+use App\Repositories\Eloquent\EloquentWorkerScheduleRepository;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -30,6 +32,7 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     public array $singletons = [
         BookingRepositoryInterface::class => EloquentBookingRepository::class,
+        WorkerScheduleRepositoryInterface::class => EloquentWorkerScheduleRepository::class,
         ClientRepositoryInterface::class => EloquentClientRepository::class,
         NotificationRepositoryInterface::class => EloquentNotificationRepository::class,
         ServiceRepositoryInterface::class => EloquentServiceRepository::class,

@@ -14,8 +14,12 @@ use NotificationChannels\WebPush\WebPushMessage;
 
 class BookingPendingClient extends Notification
 {
+    /**
+     * @param  bool  $rescheduled  kupac je sam pomerio postojeću rezervaciju (drugačiji naslov i tekst)
+     */
     public function __construct(
-        private Booking $booking
+        private Booking $booking,
+        private bool $rescheduled = false,
     ) {}
 
     /**
@@ -36,6 +40,7 @@ class BookingPendingClient extends Notification
         return [
             'type' => 'booking_pending',
             'booking_token' => $this->booking->token,
+            'rescheduled' => $this->rescheduled,
             'customer_name' => $this->booking->customer_name,
             'worker_name' => $slot->worker->name,
             'service_name' => $this->booking->service?->name,
@@ -51,7 +56,7 @@ class BookingPendingClient extends Notification
         $t = 'notifications.booking_pending_client_push';
 
         return (new WebPushMessage)
-            ->title(__("{$t}.title", ['name' => $this->booking->customer_name]))
+            ->title(__($this->rescheduled ? "{$t}.title_rescheduled" : "{$t}.title", ['name' => $this->booking->customer_name]))
             ->body(__("{$t}.body", [
                 'name' => $this->booking->customer_name,
                 'date' => $slot->date->format('d.m.Y'),
@@ -70,10 +75,10 @@ class BookingPendingClient extends Notification
         $rejectUrl = BookingReviewController::signedUrl($this->booking->token, BookingLinkAction::Reject);
 
         return BrandedMailMessage::for($this->booking->tenant ?? $this->booking->slot->worker->tenant)
-            ->subject(__("{$t}.subject", ['name' => $this->booking->customer_name]))
+            ->subject(__($this->rescheduled ? "{$t}.subject_rescheduled" : "{$t}.subject", ['name' => $this->booking->customer_name]))
             ->status(BookingStatus::Pending)
-            ->greeting(__("{$t}.greeting"))
-            ->line(__("{$t}.line"))
+            ->greeting(__($this->rescheduled ? "{$t}.greeting_rescheduled" : "{$t}.greeting"))
+            ->line(__($this->rescheduled ? "{$t}.line_rescheduled" : "{$t}.line"))
             ->bookingDetails($this->booking, withCustomer: true)
             ->action(__("{$t}.action_confirm"), $confirmUrl)
             ->secondaryAction(__("{$t}.action_reject"), $rejectUrl);

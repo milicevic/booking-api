@@ -10,7 +10,7 @@ interface TenantRegistrationServiceInterface
     /**
      * Kreira firmu i njenog vlasnika; sajt je odmah dostupan na poddomenu.
      *
-     * @param  array{app_name: string, subdomain?: string|null}  $tenantData
+     * @param  array{app_name: string, subdomain?: string|null, business_type?: string|null}  $tenantData
      * @param  array{name: string, email: string, password: string|null}  $clientData
      * @return array{0: Tenant, 1: User}
      */
@@ -19,7 +19,7 @@ interface TenantRegistrationServiceInterface
     /**
      * Samostalna registracija lozinkom; prijava je moguća tek posle potvrde emaila.
      *
-     * @param  array{name: string, email: string, password: string, app_name: string, subdomain?: string|null}  $data
+     * @param  array{name: string, email: string, password: string, app_name: string, subdomain?: string|null, business_type?: string|null}  $data
      * @return array{0: Tenant, 1: User}
      */
     public function register(array $data): array;
@@ -27,7 +27,7 @@ interface TenantRegistrationServiceInterface
     /**
      * Firma koju ručno otvara superadmin; nalog ne prolazi potvrdu emaila.
      *
-     * @param  array{name: string, email: string, password: string, app_name: string, subdomain?: string|null}  $data
+     * @param  array{name: string, email: string, password: string, app_name: string, subdomain?: string|null, business_type?: string|null}  $data
      */
     public function createBySuperadmin(array $data): Tenant;
 

@@ -13,6 +13,7 @@ use App\Notifications\BookingConfirmedCustomer;
 use App\Notifications\BookingPendingClient;
 use App\Notifications\BookingPendingCustomer;
 use App\Notifications\BookingRejectedCustomer;
+use App\Notifications\BookingRescheduledCustomer;
 use App\Notifications\ResetPasswordLink;
 use App\Notifications\VerifyEmailAddress;
 use App\Notifications\WelcomeClient;
@@ -68,6 +69,7 @@ class MailDesignTest extends TestCase
             (new BookingConfirmedCustomer($booking))->toMail($booking),
             (new BookingRejectedCustomer($booking))->toMail($booking),
             (new BookingCancelledCustomer($booking))->toMail($booking),
+            (new BookingRescheduledCustomer($booking))->toMail($booking),
             (new BookingPendingClient($booking))->toMail($user),
             (new BookingConfirmedClient($booking))->toMail($user),
             (new ResetPasswordLink('token'))->toMail($user),
