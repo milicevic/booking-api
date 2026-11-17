@@ -13,11 +13,13 @@ use Illuminate\Support\Carbon;
 /**
  * @property int $id
  * @property int $worker_id
+ * @property ?int $worker_schedule_id
  * @property ?int $tenant_id
  * @property Carbon $date
  * @property string $start_time
  * @property string $end_time
  * @property bool $is_available
+ * @property bool $is_blocked
  * @property-read User $worker
  * @property-read ?Booking $booking
  */
@@ -29,10 +31,12 @@ class Slot extends Model
     protected $fillable = [
         'tenant_id',
         'worker_id',
+        'worker_schedule_id',
         'date',
         'start_time',
         'end_time',
         'is_available',
+        'is_blocked',
     ];
 
     /**
@@ -43,6 +47,7 @@ class Slot extends Model
         return [
             'date' => 'date',
             'is_available' => 'boolean',
+            'is_blocked' => 'boolean',
         ];
     }
 

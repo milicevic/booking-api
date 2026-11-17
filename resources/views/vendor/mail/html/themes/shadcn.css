@@ -1,7 +1,9 @@
 /*
  * shadcn-vue mail theme.
  *
- * Mirrors the design tokens from booking-fe/src/style.css (shadcn-vue, base color "gray").
+ * Mirrors the app design (Claude Design canvas "Design" + booking-fe/src/style.css):
+ * system font, gray-50 page, white cards with a gray-100 border, 8px buttons,
+ * uppercase section labels and the same status colors as the admin.
  * Email clients do not support oklch(), CSS variables or Tailwind, so the tokens are
  * resolved to hex values here and inlined by Laravel at send time:
  *
@@ -18,7 +20,7 @@
 body,
 body *:not(html):not(style):not(br):not(tr):not(code) {
     box-sizing: border-box;
-    font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
     position: relative;
 }
@@ -54,17 +56,18 @@ a img {
 
 h1 {
     color: #111827;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    font-size: 20px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 24px;
     font-weight: 600;
-    letter-spacing: -0.01em;
+    line-height: 1.25;
     margin-top: 0;
+    margin-bottom: 12px;
     text-align: start;
 }
 
 h2 {
     color: #111827;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: 16px;
     font-weight: 600;
     margin-top: 0;
@@ -80,9 +83,9 @@ h3 {
 }
 
 p {
-    color: #374151;
-    font-size: 15px;
-    line-height: 1.6em;
+    color: #4b5563;
+    font-size: 16px;
+    line-height: 1.5em;
     margin-top: 0;
     text-align: start;
 }
@@ -119,13 +122,13 @@ img {
 /* Header */
 
 .header {
-    padding: 32px 0 24px;
+    padding: 32px 0 20px;
     text-align: center;
 }
 
 .header a {
     color: #111827;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: 18px;
     font-weight: 700;
     letter-spacing: -0.01em;
@@ -159,7 +162,7 @@ img {
     -premailer-cellspacing: 0;
     -premailer-width: 570px;
     background-color: #ffffff;
-    border-color: #e5e7eb;
+    border-color: #f3f4f6;
     border-radius: 16px;
     border-width: 1px;
     border-style: solid;
@@ -176,13 +179,13 @@ img {
 /* Subcopy — shadcn Separator + muted text */
 
 .subcopy {
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid #f3f4f6;
     margin-top: 24px;
-    padding-top: 24px;
+    padding-top: 20px;
 }
 
 .subcopy p {
-    color: #6b7280;
+    color: #4b5563;
     font-size: 13px;
 }
 
@@ -199,13 +202,13 @@ img {
 }
 
 .footer p {
-    color: #6b7280;
-    font-size: 12px;
+    color: #4b5563;
+    font-size: 13px;
     text-align: center;
 }
 
 .footer a {
-    color: #6b7280;
+    color: #4b5563;
     text-decoration: underline;
 }
 
@@ -258,10 +261,10 @@ img {
 
 .button {
     -webkit-text-size-adjust: none;
-    border-radius: 12px;
+    border-radius: 8px;
     color: #ffffff;
     display: inline-block;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     line-height: 20px;
     overflow: hidden;
@@ -272,34 +275,30 @@ img {
 .button-blue,
 .button-primary {
     background-color: #4f46e5;
-    border-bottom: 10px solid #4f46e5;
-    border-left: 18px solid #4f46e5;
-    border-right: 18px solid #4f46e5;
-    border-top: 10px solid #4f46e5;
+    border-bottom: 12px solid #4f46e5;
+    border-left: 20px solid #4f46e5;
+    border-right: 20px solid #4f46e5;
+    border-top: 12px solid #4f46e5;
 }
 
 /* variant="secondary" */
 .button-green,
 .button-success,
 .button-secondary {
-    background-color: #f3f4f6;
-    border-bottom: 10px solid #f3f4f6;
-    border-left: 18px solid #f3f4f6;
-    border-right: 18px solid #f3f4f6;
-    border-top: 10px solid #f3f4f6;
-    color: #111827;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    padding: 11px 19px;
 }
 
 /* variant="destructive" */
 .button-red,
 .button-error,
 .button-destructive {
-    background-color: #fef2f2;
-    border-bottom: 10px solid #fef2f2;
-    border-left: 18px solid #fef2f2;
-    border-right: 18px solid #fef2f2;
-    border-top: 10px solid #fef2f2;
-    color: #dc2626;
+    background-color: #ffffff;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    padding: 11px 19px;
 }
 
 /* Panels — shadcn Alert / muted card */
@@ -311,13 +310,15 @@ img {
 
 .panel-content {
     background-color: #eef2ff;
+    border: 1px solid #c7d2fe;
     border-radius: 12px;
-    color: #3730a3;
-    padding: 16px 20px;
+    color: #374151;
+    padding: 14px 16px;
 }
 
 .panel-content p {
-    color: #3730a3;
+    color: #374151;
+    font-size: 14px;
 }
 
 .panel-item {
@@ -339,7 +340,7 @@ img {
 
 .brand-name {
     color: #111827;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     font-size: 18px;
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -353,9 +354,9 @@ img {
 
 .badge {
     border-radius: 9999px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    line-height: 16px;
+    line-height: 18px;
     padding: 4px 10px;
 }
 
@@ -364,18 +365,20 @@ img {
 .details {
     -premailer-cellpadding: 0;
     -premailer-cellspacing: 0;
-    background-color: #f8f9fa;
+    background-color: #ffffff;
+    border: 1px solid #f3f4f6;
     border-radius: 16px;
-    margin: 4px 0 24px;
-    padding: 8px 16px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    margin: 8px 0 24px;
+    padding: 12px 20px;
     width: 100%;
 }
 
 .details-label {
-    color: #6b7280;
+    color: #4b5563;
     font-size: 14px;
     line-height: 20px;
-    padding: 6px 12px 6px 0;
+    padding: 6px 16px 6px 0;
     vertical-align: top;
     white-space: nowrap;
 }
@@ -388,4 +391,28 @@ img {
     padding: 6px 0;
     text-align: right;
     vertical-align: top;
+}
+
+/* Section label above the details card — uppercase, like the app's step headings */
+
+.details-title {
+    color: #4b5563;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 16px;
+    padding: 4px 0 8px;
+    text-transform: uppercase;
+}
+
+/* Brand mark when the business has no logo — accent square with the initial */
+
+.brand-mark {
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    width: 40px;
 }

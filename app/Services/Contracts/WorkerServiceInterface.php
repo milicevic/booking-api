@@ -18,6 +18,9 @@ interface WorkerServiceInterface
     public function create(User $client, array $data): User;
 
     /**
+     * Novi ili promenjen email radnika koji još nema nalog šalje novu pozivnicu (stara prestaje da važi);
+     * email se ne može obrisati radniku koji već ima nalog (422).
+     *
      * @param  array{name?: string, email?: ?string, phone?: ?string, bio?: ?string, can_edit_slots?: bool}  $data
      */
     public function update(User $worker, array $data): User;

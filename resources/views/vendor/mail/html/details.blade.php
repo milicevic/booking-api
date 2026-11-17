@@ -1,5 +1,8 @@
 @props(['rows' => [], 'brand' => null])
 <table class="details" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border-radius: {{ $brand['theme']['box'] ?? 16 }}px;">
+<tr>
+<td class="details-title" colspan="2">{{ __('mail.details_title') }}</td>
+</tr>
 @foreach ($rows as $label => $value)
 <tr>
 <td class="details-label">{{ $label }}</td>

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\BookingReviewController;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Booking\ConfirmByLinkRequest;
+use App\Http\Requests\Booking\ListBookingsRequest;
+use App\Http\Requests\Booking\RescheduleBookingRequest;
 use App\Http\Requests\Booking\StoreBookingRequest;
 use App\Http\Requests\Push\SubscribePushRequest;
 use App\Http\Resources\BookingResource;
@@ -14,7 +16,6 @@ use App\Services\Contracts\BookingServiceInterface;
 use App\Services\Contracts\PushSubscriptionServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 
@@ -22,11 +23,11 @@ class BookingController extends Controller
 {
     public function __construct(private readonly BookingServiceInterface $bookings) {}
 
-    /** Admin/Worker/Klijent — rezervacije koje korisnik sme da vidi */
-    public function index(Request $request): AnonymousResourceCollection
+    /** Admin/Worker/Klijent — rezervacije koje korisnik sme da vidi; filteri from, to, worker_id, status i opciono per_page */
+    public function index(ListBookingsRequest $request): AnonymousResourceCollection
     {
         return BookingResource::collection(
-            $this->bookings->listFor($request->user(), $request->integer('client_id') ?: null)
+            $this->bookings->listFor($request->user(), $request->integer('client_id') ?: null, $request->filters(), $request->perPage())
         );
     }
 
@@ -47,6 +48,16 @@ class BookingController extends Controller
         return PublicBookingResource::make($this->bookings->findByToken($token));
     }
 
+    /** Javno — kupac pomera svoju rezervaciju na jedno od ponuđenih vremena (najkasnije rok pre početka) */
+    public function customerReschedule(RescheduleBookingRequest $request, string $token): PublicBookingResource
+    {
+        return PublicBookingResource::make($this->bookings->rescheduleByCustomer(
+            $token,
+            $request->integer('slot_id'),
+            $request->string('start_time')->toString(),
+        ));
+    }
+
     /** Javno — kupac otkazuje preko tokena */
     public function cancel(string $token): MessageResource
     {
@@ -55,7 +66,7 @@ class BookingController extends Controller
         return MessageResource::make(__('messages.booking_cancelled'));
     }
 
-    /** Vlasnik firme potvrđuje rezervaciju */
+    /** Vlasnik firme (ili radnik u režimu potvrde "worker") potvrđuje rezervaciju */
     public function confirm(string $token): MessageResource
     {
         $booking = $this->bookings->findByToken($token);
@@ -66,7 +77,7 @@ class BookingController extends Controller
         return MessageResource::make(__('messages.booking_confirmed'));
     }
 
-    /** Vlasnik firme odbija rezervaciju */
+    /** Vlasnik firme (ili radnik u režimu potvrde "worker") odbija rezervaciju */
     public function reject(string $token): MessageResource
     {
         $booking = $this->bookings->findByToken($token, ['slot.worker']);
@@ -77,7 +88,18 @@ class BookingController extends Controller
         return MessageResource::make(__('messages.booking_rejected'));
     }
 
-    /** Javno — potvrda/odbijanje putem potpisanog linka iz emaila */
+    /** Vlasnik (ili radnik u režimu potvrde "worker") pomera rezervaciju na drugi termin */
+    public function reschedule(RescheduleBookingRequest $request, string $token): BookingResource
+    {
+        $booking = $this->bookings->findByToken($token, ['slot.worker', 'service']);
+        $target = $request->targetSlot();
+        Gate::authorize('reschedule', [$booking, $target]);
+
+        return BookingResource::make(
+            $this->bookings->reschedule($booking, $target, $request->string('start_time')->toString())
+        );
+    }
+
     /**
      * Stari link iz već poslatih mejlova: više ne menja rezervaciju, nego vodi na stranicu za pregled.
      */

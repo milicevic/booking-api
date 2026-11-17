@@ -36,6 +36,7 @@ class TenantRegistrationService implements TenantRegistrationServiceInterface
                 'name' => $tenantData['app_name'],
                 'subdomain' => $tenantData['subdomain'] ?? $this->subdomains->uniqueFor($tenantData['app_name']),
                 'app_name' => $tenantData['app_name'],
+                'business_type' => $tenantData['business_type'] ?? null,
                 'theme' => TenantTheme::Minimal,
                 'subscription_status' => SubscriptionStatus::Trialing,
                 'trial_ends_at' => now()->addDays(self::TRIAL_DAYS),

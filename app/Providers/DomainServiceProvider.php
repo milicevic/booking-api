@@ -34,6 +34,7 @@ use App\Services\Contracts\TokenIssuerInterface;
 use App\Services\Contracts\UserNotificationServiceInterface;
 use App\Services\Contracts\VisibleWorkersResolverInterface;
 use App\Services\Contracts\WorkerPhotoServiceInterface;
+use App\Services\Contracts\WorkerScheduleServiceInterface;
 use App\Services\Contracts\WorkerServiceInterface;
 use App\Services\Media\MediaStorage;
 use App\Services\Notification\UserNotificationService;
@@ -47,6 +48,7 @@ use App\Services\Tenant\TenantRegistrationService;
 use App\Services\Tenant\TenantService;
 use App\Services\Worker\VisibleWorkersResolver;
 use App\Services\Worker\WorkerPhotoService;
+use App\Services\Worker\WorkerScheduleService;
 use App\Services\Worker\WorkerService;
 use Illuminate\Support\ServiceProvider;
 
@@ -63,6 +65,7 @@ class DomainServiceProvider extends ServiceProvider
         AuthServiceInterface::class => AuthService::class,
         BookingNotifierInterface::class => BookingNotifier::class,
         BookingServiceInterface::class => BookingService::class,
+        WorkerScheduleServiceInterface::class => WorkerScheduleService::class,
         ClientServiceInterface::class => ClientService::class,
         CurrentTenantInterface::class => CurrentTenant::class,
         EmailVerificationServiceInterface::class => EmailVerificationService::class,

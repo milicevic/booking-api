@@ -21,7 +21,7 @@ class SlotAvailabilityService implements SlotAvailabilityServiceInterface
         private readonly BookingRepositoryInterface $bookings,
     ) {}
 
-    public function bookableTimes(int $workerId, int $durationMinutes, ?string $date = null): array
+    public function bookableTimes(int $workerId, int $durationMinutes, ?string $date = null, ?int $exceptBookingId = null): array
     {
         $slotsByDay = $this->slots->upcomingForWorker($workerId, $date)
             ->groupBy(fn (Slot $slot): string => $slot->date->toDateString());
@@ -30,7 +30,7 @@ class SlotAvailabilityService implements SlotAvailabilityServiceInterface
 
         foreach ($slotsByDay as $day => $daySlots) {
             $day = (string) $day;
-            $taken = $this->bookings->activeIntervalsForWorkerOnDate($workerId, $day);
+            $taken = $this->bookings->activeIntervalsForWorkerOnDate($workerId, $day, $exceptBookingId);
             $free = $this->subtractIntervals($this->mergedIntervals($daySlots), $taken);
             $nowMinutes = $day === today()->toDateString() ? Slot::toMinutes(now()->format('H:i:s')) : -1;
 
@@ -69,6 +69,36 @@ class SlotAvailabilityService implements SlotAvailabilityServiceInterface
         }
 
         return $times;
+    }
+
+    public function timeAt(int $workerId, int $durationMinutes, string $date, string $startTime, ?int $exceptBookingId = null): ?array
+    {
+        $daySlots = $this->slots->upcomingForWorker($workerId, $date);
+        $start = Slot::toMinutes($startTime);
+        $end = $start + $durationMinutes;
+
+        if ($date === today()->toDateString() && $start <= Slot::toMinutes(now()->format('H:i:s'))) {
+            return null;
+        }
+
+        /** @var Slot|null $slot */
+        $slot = $daySlots->first(fn (Slot $slot): bool => Slot::toMinutes($slot->start_time) <= $start && $start < Slot::toMinutes($slot->end_time));
+
+        if (! $slot) {
+            return null;
+        }
+
+        $taken = $this->bookings->activeIntervalsForWorkerOnDate($workerId, $date, $exceptBookingId);
+        $fits = collect($this->subtractIntervals($this->mergedIntervals($daySlots), $taken))
+            ->contains(fn (array $interval): bool => $interval[0] <= $start && $end <= $interval[1]);
+
+        return $fits ? [
+            'slot_id' => $slot->id,
+            'worker_id' => $workerId,
+            'date' => $date,
+            'start_time' => Slot::fromMinutes($start),
+            'end_time' => Slot::fromMinutes($end),
+        ] : null;
     }
 
     public function refreshAvailability(int $workerId, string $date): void

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BusinessType;
 use App\Enums\DeployStatus;
 use App\Enums\SubscriptionStatus;
 use App\Enums\TenantTheme;
@@ -27,6 +28,7 @@ use Illuminate\Support\Carbon;
  * @property ?Carbon $subscription_ends_at
  * @property ?string $currency
  * @property ?string $locale
+ * @property ?BusinessType $business_type
  */
 class Tenant extends Model
 {
@@ -41,6 +43,7 @@ class Tenant extends Model
         'secondary_color',
         'logo_url',
         'app_name',
+        'business_type',
         'theme',
         'trial_ends_at',
         'subscription_status',
@@ -70,6 +73,7 @@ class Tenant extends Model
             'subscription_status' => SubscriptionStatus::class,
             'deploy_status' => DeployStatus::class,
             'theme' => TenantTheme::class,
+            'business_type' => BusinessType::class,
         ];
     }
 

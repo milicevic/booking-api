@@ -25,6 +25,7 @@ class SlotResource extends JsonResource
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'is_available' => $this->is_available,
+            'is_blocked' => $this->is_blocked,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'worker' => $this->whenLoaded('worker', fn () => UserResource::make($this->worker)),

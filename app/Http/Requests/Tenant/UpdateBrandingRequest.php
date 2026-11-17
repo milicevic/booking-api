@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Tenant;
 
+use App\Enums\BusinessType;
 use App\Enums\TenantTheme;
 use App\Models\Tenant;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,6 +27,7 @@ class UpdateBrandingRequest extends FormRequest
             'theme' => ['sometimes', 'nullable', Rule::enum(TenantTheme::class)],
             'currency' => ['sometimes', Rule::in(Tenant::CURRENCIES)],
             'locale' => ['sometimes', Rule::in(Tenant::LOCALES)],
+            'business_type' => ['sometimes', 'nullable', Rule::enum(BusinessType::class)],
         ];
     }
 }

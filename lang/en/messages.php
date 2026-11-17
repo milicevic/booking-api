@@ -30,6 +30,12 @@ return [
     'booking_confirmed' => 'Booking confirmed.',
     'booking_rejected' => 'Booking rejected.',
     'booking_not_accessible' => 'You do not have access to this booking.',
+    'worker_email_required_for_account' => 'This worker already has an account and needs an email to sign in.',
+    'slot_not_accessible' => 'You do not have access to this slot.',
+    'booking_not_active' => 'Only a pending or confirmed booking can be moved.',
+    'reschedule_too_late' => 'The booking can be moved no later than :hours h before it starts.',
+    'booking_rescheduled' => 'The booking has been moved.',
+    'slots_bulk_too_many' => 'Too many slots at once (at most :max). Choose a shorter period.',
     'invalid_action' => 'Invalid action.',
     'invalid_link' => 'Link is invalid or expired.',
 

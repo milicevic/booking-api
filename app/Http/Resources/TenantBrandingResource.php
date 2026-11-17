@@ -24,6 +24,7 @@ class TenantBrandingResource extends JsonResource
             'logo_url' => $this->logo_url,
             'currency' => $this->currency,
             'locale' => $this->locale,
+            'business_type' => $this->business_type,
         ];
     }
 }

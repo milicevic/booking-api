@@ -25,7 +25,7 @@
 {{-- Footer --}}
 <x-slot:footer>
 <x-mail::footer>
-© {{ date('Y') }} {{ $brand['name'] }}. {{ __('All rights reserved.') }}
+{{ __('mail.footer') }}
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

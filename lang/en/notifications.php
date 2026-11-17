@@ -34,6 +34,9 @@ return [
         'line' => 'A user has requested a booking. Please confirm or reject the request.',
         'action_confirm' => 'Confirm booking',
         'action_reject' => 'Reject booking',
+        'subject_rescheduled' => 'Customer moved a booking — :name',
+        'greeting_rescheduled' => 'A booking was moved!',
+        'line_rescheduled' => 'The customer picked a new time. Please confirm or reject the booking.',
     ],
 
     'booking_confirmed_client' => [
@@ -41,6 +44,9 @@ return [
         'greeting' => 'New booking confirmed!',
         'line' => 'A new booking has been automatically confirmed.',
         'action' => 'Open dashboard',
+        'subject_rescheduled' => 'Customer moved a booking — :name',
+        'greeting_rescheduled' => 'A booking was moved!',
+        'line_rescheduled' => 'The customer picked a new time; the booking was confirmed automatically.',
     ],
 
     'booking_rejected_customer' => [
@@ -83,6 +89,19 @@ return [
         'line2' => 'Available slots are still open — feel free to book another.',
     ],
 
+    'booking_rescheduled_customer' => [
+        'subject' => 'Your booking has been moved',
+        'greeting' => 'Hello, :name!',
+        'line1' => 'Your booking has been moved to a new time:',
+        'action' => 'View booking',
+        'line2' => 'If the new time does not work for you, you can cancel the booking using the link above.',
+    ],
+
+    'booking_rescheduled_customer_push' => [
+        'title' => 'Your booking has been moved',
+        'body' => 'New time with :worker: :date at :start.',
+    ],
+
     'booking_confirmed_customer_push' => [
         'title' => 'Booking confirmed ✓',
         'body' => 'Your booking with :worker on :date at :start has been confirmed.',
@@ -96,11 +115,13 @@ return [
     'booking_pending_client_push' => [
         'title' => 'New booking — :name',
         'body' => ':name requested a booking on :date at :start with :worker.',
+        'title_rescheduled' => 'Booking moved — :name',
     ],
 
     'booking_confirmed_client_push' => [
         'title' => 'Booking confirmed — :name',
         'body' => 'A new booking for :name on :date at :start has been confirmed.',
+        'title_rescheduled' => 'Booking moved — :name',
     ],
 
     'worker_invite' => [
