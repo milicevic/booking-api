@@ -23,6 +23,7 @@ return [
     'contact_both_required' => 'Enter both your email and phone number.',
     'contact_phone_required' => 'Enter your phone number.',
     'contact_email_required' => 'Enter your email.',
+    'phone_invalid' => 'Enter a valid phone number with the country code (e.g. +381 64 123 4567).',
     'service_unavailable_for_worker' => 'This service is not available for the selected worker.',
     'service_unavailable' => 'This service is not available.',
     'booking_not_pending' => 'Booking is not in pending status.',

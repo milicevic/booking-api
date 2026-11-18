@@ -2,7 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\BookingStatus;
 use App\Models\Booking;
+use App\Services\Contracts\BookingCalendarInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,6 +15,20 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class PublicBookingResource extends JsonResource
 {
+    /**
+     * @return array{google_url: string, ics_url: string}|null
+     */
+    private function calendarLinks(): ?array
+    {
+        $calendar = app(BookingCalendarInterface::class);
+
+        if (! in_array($this->status, BookingStatus::active(), true) || ! $calendar->enabled($this->resource)) {
+            return null;
+        }
+
+        return ['google_url' => $calendar->googleUrl($this->resource), 'ics_url' => $calendar->icsUrl($this->resource)];
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -34,6 +50,8 @@ class PublicBookingResource extends JsonResource
             // Da li kupac sada sme sam da pomeri rezervaciju, i do koliko sati pre početka
             'can_reschedule' => $this->whenLoaded('slot', fn () => $this->canBeRescheduledByCustomer()),
             'reschedule_cutoff_hours' => $this->whenLoaded('slot', fn () => $this->rescheduleCutoffHours()),
+            // Dodavanje u kalendar: Google link (Android, web) i .ics (iPhone); null ako ga je vlasnik isključio
+            'calendar' => $this->whenLoaded('slot', fn () => $this->calendarLinks()),
             'slot' => $this->whenLoaded('slot', fn () => PublicSlotResource::make($this->slot)),
             'service' => $this->whenLoaded('service', fn () => ServiceResource::make($this->service)),
         ];

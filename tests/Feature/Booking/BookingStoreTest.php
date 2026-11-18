@@ -49,6 +49,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ]);
 
@@ -68,6 +69,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ]);
 
@@ -86,6 +88,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ]);
 
@@ -106,6 +109,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ]);
 
@@ -147,6 +151,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ]);
 
@@ -166,6 +171,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ]);
 
@@ -186,6 +192,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ]);
 
@@ -208,6 +215,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ]);
 
@@ -238,6 +246,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ]);
 
@@ -259,6 +268,7 @@ class BookingStoreTest extends TestCase
             ->postJson('/api/bookings', [
                 'slot_id' => $slot->id,
                 'customer_name' => 'Ana Anić',
+                'customer_phone' => '+381601234567',
                 'customer_email' => 'ana@example.com',
             ])
             ->assertUnprocessable()
@@ -282,6 +292,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ])->assertCreated()->assertJsonPath('service.name', 'Šišanje')->json('token');
 
@@ -305,6 +316,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
         ]);
 
         $response->assertStatus(422);
@@ -321,6 +333,7 @@ class BookingStoreTest extends TestCase
         $this->postJson('/api/bookings', [
             'slot_id' => $slot->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
         ])->assertUnprocessable()->assertJsonValidationErrors(['service_id']);
 
         $this->assertDatabaseMissing('bookings', ['slot_id' => $slot->id]);
@@ -338,6 +351,7 @@ class BookingStoreTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $this->service->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ])->assertCreated();
 

@@ -89,9 +89,10 @@ class BookingService implements BookingServiceInterface
 
     public function cancel(string $token, bool $notifyCustomer = false): Booking
     {
-        $booking = $this->bookings->findActiveByTokenOrFail($token, ['slot']);
+        $booking = $this->bookings->findActiveByTokenOrFail($token, ['slot.worker.client', 'service']);
 
         $this->changeStatusAndFreeTime($booking, BookingStatus::Cancelled);
+        $this->notifier->cancelledByCustomer($booking);
 
         if ($notifyCustomer) {
             $this->notifier->cancelled($booking);
@@ -216,13 +217,13 @@ class BookingService implements BookingServiceInterface
     }
 
     /**
-     * Kontakt kupca mora da ispuni pravilo vlasnika firme (CustomerContact), podrazumevano email ili telefon.
+     * Kontakt kupca mora da ispuni pravilo vlasnika firme (CustomerContact), podrazumevano obavezan telefon.
      *
      * @param  array<string, mixed>  $data
      */
     private function ensureContactAllowed(Slot $slot, array $data): void
     {
-        $contact = $slot->worker->client?->clientProfile->customer_contact ?? CustomerContact::EmailOrPhone;
+        $contact = $slot->worker->client?->clientProfile->customer_contact ?? CustomerContact::default();
         $violation = $contact->violation($data['customer_email'] ?? null, $data['customer_phone'] ?? null);
 
         if ($violation !== null) {

@@ -55,6 +55,7 @@ class BookingRejectedCustomer extends Notification
             ->greeting(__("{$t}.greeting", ['name' => $this->booking->customer_name]))
             ->line(__("{$t}.line1"))
             ->bookingDetails($this->booking)
+            ->calendarInvite($this->booking)
             ->line(__("{$t}.line2"));
     }
 }

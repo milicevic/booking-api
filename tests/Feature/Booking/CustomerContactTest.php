@@ -14,6 +14,10 @@ use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
+/**
+ * Kontakt kupca: pravilo bira vlasnik (podrazumevano telefon obavezan, email opcion);
+ * telefon je uvek u međunarodnom obliku.
+ */
 class CustomerContactTest extends TestCase
 {
     use RefreshDatabase;
@@ -60,13 +64,13 @@ class CustomerContactTest extends TestCase
     {
         return [
             'email ili telefon: ništa' => [CustomerContact::EmailOrPhone, null, null, false],
-            'email ili telefon: samo telefon' => [CustomerContact::EmailOrPhone, null, '0601234567', true],
+            'email ili telefon: samo telefon' => [CustomerContact::EmailOrPhone, null, '+381601234567', true],
             'email ili telefon: samo email' => [CustomerContact::EmailOrPhone, 'ana@example.com', null, true],
             'oba: samo email' => [CustomerContact::Both, 'ana@example.com', null, false],
-            'oba: oba' => [CustomerContact::Both, 'ana@example.com', '0601234567', true],
+            'oba: oba' => [CustomerContact::Both, 'ana@example.com', '+381601234567', true],
             'telefon: samo email' => [CustomerContact::Phone, 'ana@example.com', null, false],
-            'telefon: samo telefon' => [CustomerContact::Phone, null, '0601234567', true],
-            'email: samo telefon' => [CustomerContact::Email, null, '0601234567', false],
+            'telefon: samo telefon' => [CustomerContact::Phone, null, '+381601234567', true],
+            'email: samo telefon' => [CustomerContact::Email, null, '+381601234567', false],
             'email: samo email' => [CustomerContact::Email, 'ana@example.com', null, true],
         ];
     }
@@ -82,12 +86,39 @@ class CustomerContactTest extends TestCase
         $this->assertSame($allowed ? 1 : 0, Booking::where('slot_id', $this->slot->id)->count());
     }
 
-    public function test_error_message_says_what_is_missing(): void
+    public function test_phone_is_required_by_default_and_email_is_optional(): void
     {
-        $this->require(CustomerContact::Phone);
-
         $this->withHeader('Accept-Language', 'sr')->book('ana@example.com', null)
+            ->assertUnprocessable()
             ->assertJsonPath('message', 'Unesite broj telefona.');
+
+        $this->book(null, '+381601234567')->assertCreated();
+    }
+
+    public function test_new_profiles_default_to_phone(): void
+    {
+        $this->assertSame(CustomerContact::Phone, $this->client->clientProfile->fresh()?->customer_contact);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function invalidPhones(): array
+    {
+        return [
+            'bez pozivnog broja' => ['0641234567'],
+            'sa razmacima' => ['+381 64 123 4567'],
+            'prekratak' => ['+38164'],
+            'slova' => ['+381abc12345'],
+        ];
+    }
+
+    #[DataProvider('invalidPhones')]
+    public function test_phone_must_be_in_international_format(string $phone): void
+    {
+        $this->book(null, $phone)
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.customer_phone.0', __('messages.phone_invalid'));
     }
 
     public function test_client_can_change_the_rule(): void
@@ -102,11 +133,11 @@ class CustomerContactTest extends TestCase
 
     public function test_tenant_config_tells_the_booking_page_the_rule(): void
     {
-        $this->getJson('/api/tenant/config')->assertJsonPath('customer_contact', 'email_or_phone');
-
-        $this->require(CustomerContact::Phone);
-
         $this->getJson('/api/tenant/config')->assertJsonPath('customer_contact', 'phone');
+
+        $this->require(CustomerContact::Both);
+
+        $this->getJson('/api/tenant/config')->assertJsonPath('customer_contact', 'both');
     }
 
     public function test_tenant_config_tells_workers_who_confirms_bookings(): void

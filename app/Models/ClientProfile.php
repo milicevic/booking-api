@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
  * @property ?ConfirmationMode $confirmation_mode null samo pre prvog snimanja (postavlja ga saving hook)
  * @property ?CustomerContact $customer_contact
  * @property int $reschedule_cutoff_hours
+ * @property bool $calendar_invites
  * @property ?Carbon $onboarding_completed_at
  */
 class ClientProfile extends Model
@@ -41,6 +42,7 @@ class ClientProfile extends Model
         'confirmation_mode',
         'onboarding_completed_at',
         'reschedule_cutoff_hours',
+        'calendar_invites',
     ];
 
     /**
@@ -54,6 +56,7 @@ class ClientProfile extends Model
             'confirmation_mode' => ConfirmationMode::class,
             'onboarding_completed_at' => 'datetime',
             'reschedule_cutoff_hours' => 'integer',
+            'calendar_invites' => 'boolean',
         ];
     }
 

@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Service;
 use App\Models\Slot;
 use App\Models\User;
+use App\Notifications\BookingCancelledClient;
 use App\Notifications\BookingCancelledCustomer;
 use App\Notifications\BookingConfirmedClient;
 use App\Notifications\BookingConfirmedCustomer;
@@ -72,6 +73,7 @@ class MailDesignTest extends TestCase
             (new BookingRescheduledCustomer($booking))->toMail($booking),
             (new BookingPendingClient($booking))->toMail($user),
             (new BookingConfirmedClient($booking))->toMail($user),
+            (new BookingCancelledClient($booking))->toMail($user),
             (new ResetPasswordLink('token'))->toMail($user),
             (new VerifyEmailAddress($this->tenant))->toMail($user),
             (new WelcomeClient($this->tenant))->toMail($user),

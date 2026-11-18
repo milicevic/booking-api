@@ -31,8 +31,10 @@ class TenantConfigResource extends JsonResource
             'subdomain' => $this->subdomain,
             'currency' => $this->currency,
             'locale' => $this->locale,
-            // Koje kontakt podatke kupac mora da ostavi (podešavanje vlasnika firme)
-            'customer_contact' => $this->clientProfiles->first()->customer_contact ?? CustomerContact::EmailOrPhone,
+            // Koje kontakt podatke kupac mora da ostavi (podešavanje vlasnika firme; podrazumevano telefon)
+            'customer_contact' => $this->clientProfiles->first()->customer_contact ?? CustomerContact::default(),
+            // Da li kupac može da doda termin u kalendar (podešavanje vlasnika)
+            'calendar_invites' => $this->clientProfiles->first()->calendar_invites ?? true,
             // Do koliko sati pre početka kupac sme sam da pomeri rezervaciju
             'reschedule_cutoff_hours' => $this->clientProfiles->first()->reschedule_cutoff_hours ?? ClientProfile::DEFAULT_RESCHEDULE_CUTOFF_HOURS,
             // Ko potvrđuje rezervacije; radnik po tome zna da li sme sam da potvrdi svoje termine

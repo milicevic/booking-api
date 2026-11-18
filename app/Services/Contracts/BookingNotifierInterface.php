@@ -18,6 +18,9 @@ interface BookingNotifierInterface
 
     public function cancelled(Booking $booking): void;
 
+    /** Kupac je otkazao rezervaciju: obaveštava se vlasnik (mejl, admin, push). */
+    public function cancelledByCustomer(Booking $booking): void;
+
     /** Vlasnik ili radnik je pomerio rezervaciju na drugi termin. */
     public function rescheduled(Booking $booking): void;
 
