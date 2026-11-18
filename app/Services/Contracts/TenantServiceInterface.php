@@ -30,4 +30,12 @@ interface TenantServiceInterface
     public function requestDeploy(Tenant $tenant, array $data): Tenant;
 
     public function delete(Tenant $tenant): void;
+
+    /**
+     * Web manifest (PWA) za sajt na adresi $origin: naziv i boja firme, ili platforme kada je to glavni domen.
+     * Null kada adresa nije ni platforma ni sajt neke firme.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function webManifest(string $origin): ?array;
 }

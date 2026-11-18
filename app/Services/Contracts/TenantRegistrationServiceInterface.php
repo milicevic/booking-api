@@ -25,11 +25,11 @@ interface TenantRegistrationServiceInterface
     public function register(array $data): array;
 
     /**
-     * Firma koju ručno otvara superadmin; nalog ne prolazi potvrdu emaila.
+     * Firma koju ručno otvara admin; nalog ne prolazi potvrdu emaila.
      *
      * @param  array{name: string, email: string, password: string, app_name: string, subdomain?: string|null, business_type?: string|null}  $data
      */
-    public function createBySuperadmin(array $data): Tenant;
+    public function createByAdmin(array $data): Tenant;
 
     /** Registracija Google nalogom; email je već potvrdio Google. */
     public function registerWithGoogle(string $appName, string $name, string $email, string $googleId): User;

@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\Repositories\Contracts\UserLookupRepositoryInterface;
+use App\Rules\UniqueBusinessName;
 use App\Services\Contracts\GoogleAuthServiceInterface;
 use App\Services\Contracts\TenantRegistrationServiceInterface;
 use App\Services\Contracts\TokenIssuerInterface;
@@ -92,6 +93,11 @@ class GoogleAuthService implements GoogleAuthServiceInterface
         $user = $this->findOrLinkUser($googleUser, $email);
 
         if (! $user && $state['intent'] === 'register') {
+            // Naziv je proveren pre odlaska na Google, ali ga je u međuvremenu mogao zauzeti neko drugi
+            if (UniqueBusinessName::isTaken((string) $state['app_name'])) {
+                return ['error' => 'name_taken'];
+            }
+
             $user = $this->registration->registerWithGoogle(
                 (string) $state['app_name'],
                 $googleUser->getName() ?: $email,

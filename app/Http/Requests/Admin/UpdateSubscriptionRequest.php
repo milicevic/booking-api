@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Superadmin;
+namespace App\Http\Requests\Admin;
 
 use App\Enums\SubscriptionStatus;
 use Illuminate\Foundation\Http\FormRequest;

@@ -31,6 +31,7 @@ return [
     'booking_rejected' => 'Booking rejected.',
     'booking_not_accessible' => 'You do not have access to this booking.',
     'worker_email_required_for_account' => 'This worker already has an account and needs an email to sign in.',
+    'business_name_taken' => 'A business with this name already exists. Please choose another name.',
     'slot_not_accessible' => 'You do not have access to this slot.',
     'booking_not_active' => 'Only a pending or confirmed booking can be moved.',
     'reschedule_too_late' => 'The booking can be moved no later than :hours h before it starts.',
@@ -44,6 +45,7 @@ return [
 
     // Push notifications
     'push_subscribed' => 'Push notifications enabled.',
+    'push_not_configured' => 'Notifications are not available right now.',
     'push_unsubscribed' => 'Push notifications disabled.',
 
     // Not found (404)

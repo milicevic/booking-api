@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Superadmin;
+namespace Tests\Feature\Admin;
 
 use App\Enums\UserRole;
 use App\Models\Booking;
@@ -18,9 +18,9 @@ class TenantManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function superadmin(): User
+    private function admin(): User
     {
-        return User::factory()->superadmin()->create(['tenant_id' => null]);
+        return User::factory()->admin()->create();
     }
 
     /**
@@ -32,18 +32,18 @@ class TenantManagementTest extends TestCase
             'app_name' => 'Salon Ana',
             'name' => 'Ana Anić',
             'email' => 'ana@salon.com',
-            'password' => 'tajna1234',
+            'password' => 'Tajna12345',
         ], $overrides);
     }
 
     // --- Kreiranje ---
 
-    public function test_superadmin_can_create_tenant_with_client(): void
+    public function test_admin_can_create_tenant_with_client(): void
     {
         Notification::fake();
 
-        $this->actingAs($this->superadmin())
-            ->postJson('/api/superadmin/tenants', $this->validPayload())
+        $this->actingAs($this->admin())
+            ->postJson('/api/admin/tenants', $this->validPayload())
             ->assertCreated()
             ->assertJsonPath('subdomain', 'salon-ana')
             ->assertJsonPath('deploy_status', 'deployed')
@@ -56,12 +56,12 @@ class TenantManagementTest extends TestCase
         Notification::assertSentTo($client, WelcomeClient::class);
     }
 
-    public function test_superadmin_can_choose_subdomain(): void
+    public function test_admin_can_choose_subdomain(): void
     {
         Notification::fake();
 
-        $this->actingAs($this->superadmin())
-            ->postJson('/api/superadmin/tenants', $this->validPayload(['subdomain' => 'ana']))
+        $this->actingAs($this->admin())
+            ->postJson('/api/admin/tenants', $this->validPayload(['subdomain' => 'ana']))
             ->assertCreated()
             ->assertJsonPath('subdomain', 'ana');
     }
@@ -70,8 +70,8 @@ class TenantManagementTest extends TestCase
     {
         Notification::fake();
 
-        $this->actingAs($this->superadmin())
-            ->postJson('/api/superadmin/tenants', $this->validPayload());
+        $this->actingAs($this->admin())
+            ->postJson('/api/admin/tenants', $this->validPayload());
 
         $this->getJson('http://salon-ana.slotres.click/api/tenant/config')
             ->assertOk()
@@ -82,8 +82,8 @@ class TenantManagementTest extends TestCase
     {
         User::factory()->client()->create(['email' => 'ana@salon.com']);
 
-        $this->actingAs($this->superadmin())
-            ->postJson('/api/superadmin/tenants', $this->validPayload(['subdomain' => 'localhost']))
+        $this->actingAs($this->admin())
+            ->postJson('/api/admin/tenants', $this->validPayload(['subdomain' => 'localhost']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['subdomain', 'email']);
     }
@@ -93,13 +93,13 @@ class TenantManagementTest extends TestCase
         $client = User::factory()->client()->create();
 
         $this->actingAs($client)
-            ->postJson('/api/superadmin/tenants', $this->validPayload())
+            ->postJson('/api/admin/tenants', $this->validPayload())
             ->assertForbidden();
     }
 
     // --- Brisanje ---
 
-    public function test_superadmin_can_delete_tenant_with_all_data(): void
+    public function test_admin_can_delete_tenant_with_all_data(): void
     {
         Storage::fake('public');
         $tenant = Tenant::factory()->create();
@@ -117,8 +117,8 @@ class TenantManagementTest extends TestCase
         app()->instance('current_tenant', $this->tenant);
         $otherClient = User::factory()->client()->create();
 
-        $this->actingAs($this->superadmin())
-            ->deleteJson("/api/superadmin/tenants/{$tenant->id}")
+        $this->actingAs($this->admin())
+            ->deleteJson("/api/admin/tenants/{$tenant->id}")
             ->assertNoContent();
 
         $this->assertModelMissing($tenant);
@@ -139,8 +139,8 @@ class TenantManagementTest extends TestCase
     {
         $tenant = Tenant::factory()->create(['subdomain' => 'salon-ana']);
 
-        $this->actingAs($this->superadmin())
-            ->deleteJson("/api/superadmin/tenants/{$tenant->id}")
+        $this->actingAs($this->admin())
+            ->deleteJson("/api/admin/tenants/{$tenant->id}")
             ->assertNoContent();
 
         $this->getJson('http://salon-ana.slotres.click/api/slots/available')
@@ -152,9 +152,37 @@ class TenantManagementTest extends TestCase
         $client = User::factory()->client()->create();
 
         $this->actingAs($client)
-            ->deleteJson("/api/superadmin/tenants/{$this->tenant->id}")
+            ->deleteJson("/api/admin/tenants/{$this->tenant->id}")
             ->assertForbidden();
 
         $this->assertModelExists($this->tenant);
+    }
+
+    // --- Pretplata i pristup ---
+
+    public function test_admin_can_list_tenants_and_change_subscription(): void
+    {
+        $this->actingAs($this->admin())
+            ->getJson('/api/admin/tenants')
+            ->assertOk()
+            ->assertJsonFragment(['subdomain' => 'localhost']);
+
+        $this->actingAs($this->admin())
+            ->patchJson("/api/admin/tenants/{$this->tenant->id}/subscription", ['subscription_status' => 'expired'])
+            ->assertOk()
+            ->assertJsonPath('subscription_status', 'expired');
+    }
+
+    public function test_worker_cannot_manage_tenants(): void
+    {
+        $client = User::factory()->client()->create();
+        $worker = User::factory()->worker($client->id)->create();
+
+        $this->actingAs($worker)->getJson('/api/admin/tenants')->assertForbidden();
+    }
+
+    public function test_old_superadmin_routes_no_longer_exist(): void
+    {
+        $this->actingAs($this->admin())->getJson('/api/superadmin/tenants')->assertNotFound();
     }
 }

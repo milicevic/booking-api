@@ -10,7 +10,7 @@ class PersonalAccessToken extends SanctumPersonalAccessToken
 {
     /**
      * Override Sanctum's tokenable lookup to bypass global scopes.
-     * Ensures platform-level users (admin, superadmin) with null tenant_id
+     * Ensures platform-level users (admin) with null tenant_id
      * are resolved even when a tenant context is active.
      *
      * @return MorphTo<Model, $this>

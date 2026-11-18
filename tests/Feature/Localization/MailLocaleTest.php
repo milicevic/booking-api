@@ -107,7 +107,7 @@ class MailLocaleTest extends TestCase
         $this->withHeader('Accept-Language', 'sr')->postJson('/api/register', [
             'name' => 'Ana Anić',
             'email' => 'ana@salon.com',
-            'password' => 'tajna1234',
+            'password' => 'Tajna12345',
             'app_name' => 'Salon Ana',
         ])->assertCreated()->assertJsonPath('tenant.locale', 'sr');
 
