@@ -102,6 +102,18 @@ return [
         'body' => 'Novi termin kod :worker: :date u :start.',
     ],
 
+    'booking_cancelled_client' => [
+        'subject' => 'Kupac je otkazao rezervaciju — :name',
+        'greeting' => 'Rezervacija je otkazana',
+        'line' => 'Kupac je otkazao rezervaciju. Vreme je ponovo slobodno za druge.',
+        'action' => 'Otvori kontrolnu tablu',
+    ],
+
+    'booking_cancelled_client_push' => [
+        'title' => 'Otkazana rezervacija — :name',
+        'body' => ':name je otkazao rezervaciju :date u :start kod :worker.',
+    ],
+
     'booking_confirmed_customer_push' => [
         'title' => 'Rezervacija potvrđena ✓',
         'body' => 'Vaša rezervacija kod :worker dana :date u :start je potvrđena.',

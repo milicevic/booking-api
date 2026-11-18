@@ -5,7 +5,9 @@ namespace Tests\Feature\Booking;
 use App\Models\Booking;
 use App\Models\Slot;
 use App\Models\User;
+use App\Notifications\BookingCancelledClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class BookingCancelTest extends TestCase
@@ -76,5 +78,38 @@ class BookingCancelTest extends TestCase
         $response = $this->patchJson('/api/bookings/invalid-token/cancel');
 
         $response->assertNotFound();
+    }
+
+    public function test_owner_is_notified_when_customer_cancels(): void
+    {
+        Notification::fake();
+        $client = User::factory()->client()->create();
+        $worker = User::factory()->worker($client->id)->create();
+        $slot = Slot::factory()->create(['worker_id' => $worker->id]);
+        $booking = Booking::factory()->confirmed()->create(['slot_id' => $slot->id, 'customer_name' => 'Ana']);
+
+        $this->patchJson("/api/bookings/{$booking->token}/cancel")->assertOk();
+
+        Notification::assertSentTo($client, BookingCancelledClient::class, function (BookingCancelledClient $notification, array $channels) use ($client, $booking) {
+            $data = $notification->toDatabase($client);
+
+            return in_array('mail', $channels, true)
+                && in_array('database', $channels, true)
+                && $data['type'] === 'booking_cancelled'
+                && $data['booking_token'] === $booking->token
+                && $data['customer_name'] === 'Ana';
+        });
+        Notification::assertNotSentTo($worker, BookingCancelledClient::class);
+    }
+
+    public function test_owner_is_notified_when_customer_cancels_from_fallback_page(): void
+    {
+        Notification::fake();
+        [, $booking] = $this->makeBooking('pending');
+        $client = $booking->slot->worker->client;
+
+        $this->post("/manage/{$booking->token}/cancel")->assertRedirect();
+
+        Notification::assertSentTo($client, BookingCancelledClient::class);
     }
 }

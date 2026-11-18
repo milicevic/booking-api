@@ -127,6 +127,7 @@ Pregled i otkazivanje po tokenu. Otkazati se može rezervacija koja čeka potvrd
   - kupac dobija mejl kad zakaže (čeka potvrdu) i kad otkaže; kad vlasnik potvrdi ili odbije, dobija push i mejl (mejl samo ako je ostavio email);
   - vlasnik dobija mejl, obaveštenje u adminu i push za novu rezervaciju (na čekanju ili odmah potvrđenu); u režimu `worker` zahtev za potvrdu umesto njega dobija radnik;
   - kupac dobija push i mejl kad mu se rezervacija pomeri;
+  - vlasnik dobija mejl, obaveštenje u adminu i push kad kupac otkaže rezervaciju (`BookingCancelledClient`);
   - jezik mejla prati jezik kupca, odnosno firme.
 - **„Vaše rezervacije“:** token se pamti u `localStorage` pregledača (`booking-fe/src/lib/myBookings.ts`) i prikazuje se na početnoj strani sajta firme. Iz pregledača se briše tek kad je rezervacija prošla, otkazana, odbijena ili je server ne prepoznaje (404). Na grešku mreže ostaje. Na drugom uređaju kupac koristi link iz mejla.
 - **Upravljanje:** kupac rezervaciju vidi i otkazuje na `/manage/{token}` (frontend) ili preko linka iz mejla.

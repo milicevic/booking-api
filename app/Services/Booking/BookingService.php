@@ -89,9 +89,10 @@ class BookingService implements BookingServiceInterface
 
     public function cancel(string $token, bool $notifyCustomer = false): Booking
     {
-        $booking = $this->bookings->findActiveByTokenOrFail($token, ['slot']);
+        $booking = $this->bookings->findActiveByTokenOrFail($token, ['slot.worker.client', 'service']);
 
         $this->changeStatusAndFreeTime($booking, BookingStatus::Cancelled);
+        $this->notifier->cancelledByCustomer($booking);
 
         if ($notifyCustomer) {
             $this->notifier->cancelled($booking);

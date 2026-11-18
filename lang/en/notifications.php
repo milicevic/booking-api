@@ -102,6 +102,18 @@ return [
         'body' => 'New time with :worker: :date at :start.',
     ],
 
+    'booking_cancelled_client' => [
+        'subject' => 'A customer cancelled a booking — :name',
+        'greeting' => 'Booking cancelled',
+        'line' => 'The customer cancelled the booking. The time is free again for others.',
+        'action' => 'Open dashboard',
+    ],
+
+    'booking_cancelled_client_push' => [
+        'title' => 'Booking cancelled — :name',
+        'body' => ':name cancelled the booking on :date at :start with :worker.',
+    ],
+
     'booking_confirmed_customer_push' => [
         'title' => 'Booking confirmed ✓',
         'body' => 'Your booking with :worker on :date at :start has been confirmed.',
