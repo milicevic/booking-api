@@ -31,6 +31,7 @@ return [
     'booking_rejected' => 'Rezervacija odbijena.',
     'booking_not_accessible' => 'Nemate pristup ovoj rezervaciji.',
     'worker_email_required_for_account' => 'Radnik već ima nalog, pa mu je email potreban za prijavu.',
+    'business_name_taken' => 'Firma sa ovim nazivom već postoji. Izaberite drugi naziv.',
     'slot_not_accessible' => 'Nemate pristup ovom terminu.',
     'booking_not_active' => 'Pomeriti se može samo rezervacija koja čeka potvrdu ili je potvrđena.',
     'reschedule_too_late' => 'Termin se može promeniti najkasnije :hours h pre početka.',
@@ -44,6 +45,7 @@ return [
 
     // Push notifikacije
     'push_subscribed' => 'Push notifikacije su uključene.',
+    'push_not_configured' => 'Obaveštenja trenutno nisu dostupna.',
     'push_unsubscribed' => 'Push notifikacije su isključene.',
 
     // Nepostojeći podaci (404)

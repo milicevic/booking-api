@@ -23,7 +23,8 @@ class TenantScope implements Scope
         /** @var User|null $user */
         $user = Auth::user();
 
-        if ($user?->role === UserRole::Superadmin) {
+        // Admin upravlja svim firmama, pa ga tenant filter ne ograničava
+        if ($user?->role === UserRole::Admin) {
             return;
         }
 

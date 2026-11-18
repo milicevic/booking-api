@@ -61,14 +61,6 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'role' => 'admin',
             'client_id' => null,
-        ]);
-    }
-
-    public function superadmin(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'superadmin',
-            'client_id' => null,
             'tenant_id' => null,
         ]);
     }

@@ -6,9 +6,13 @@ use App\Models\PersonalAccessToken;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 use Laravel\Sanctum\Sanctum;
+use NotificationChannels\WebPush\Events\NotificationFailed;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +24,19 @@ class AppServiceProvider extends ServiceProvider
         JsonResource::withoutWrapping();
 
         $this->configureRateLimiting();
+
+        // Odbijen push (pogrešni VAPID ključevi, istekla pretplata…) se inače ne vidi nigde
+        Event::listen(NotificationFailed::class, function (NotificationFailed $event): void {
+            Log::warning('Web push failed: '.$event->report->getReason(), [
+                'push_service' => parse_url($event->subscription->endpoint, PHP_URL_HOST),
+                'expired' => $event->report->isSubscriptionExpired(),
+            ]);
+        });
+
+        // Lozinke: bar 10 znakova, velika i mala slova i broj; na produkciji i provera da nije procurela
+        Password::defaults(fn (): Password => app()->isProduction()
+            ? Password::min(10)->letters()->mixedCase()->numbers()->uncompromised()
+            : Password::min(10)->letters()->mixedCase()->numbers());
     }
 
     /**

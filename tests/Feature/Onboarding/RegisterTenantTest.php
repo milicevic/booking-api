@@ -20,7 +20,7 @@ class RegisterTenantTest extends TestCase
         return array_merge([
             'name' => 'Ana Anić',
             'email' => 'ana@salon.com',
-            'password' => 'tajna1234',
+            'password' => 'Tajna12345',
             'app_name' => 'Moj Salon',
         ], $overrides);
     }
@@ -104,7 +104,7 @@ class RegisterTenantTest extends TestCase
         $this->assertNull($user->email_verified_at);
         $this->assertSame(0, $user->tokens()->count());
 
-        $this->postJson('/api/auth/login', ['email' => 'ana@salon.com', 'password' => 'tajna1234'])
+        $this->postJson('/api/auth/login', ['email' => 'ana@salon.com', 'password' => 'Tajna12345'])
             ->assertForbidden()
             ->assertJsonPath('code', 'email_not_verified');
     }
@@ -168,7 +168,7 @@ class RegisterTenantTest extends TestCase
         $this->postJson('/api/register', [
             'name' => 'Ana Anić',
             'email' => 'ana@salon.com',
-            'password' => 'tajna1234',
+            'password' => 'Tajna12345',
             'app_name' => 'Moj Salon',
         ])->assertCreated();
 
@@ -187,13 +187,14 @@ class RegisterTenantTest extends TestCase
         Notification::fake();
         $this->postJson('/api/register', $this->validPayload());
 
-        $preview = $this->getJson('/api/register/subdomain-preview?app_name=Moj%20Salon')
+        // Drugi naziv (naziv firme je jedinstven), ali isti predlog poddomena
+        $preview = $this->getJson('/api/register/subdomain-preview?app_name=Moj-Salon')
             ->assertOk()
             ->json('subdomain');
 
         $this->assertSame('moj-salon-1', $preview);
 
-        $this->postJson('/api/register', $this->validPayload(['email' => 'druga@salon.com']))->assertCreated();
+        $this->postJson('/api/register', $this->validPayload(['email' => 'druga@salon.com', 'app_name' => 'Moj-Salon']))->assertCreated();
         $this->assertDatabaseHas('tenants', ['subdomain' => $preview]);
     }
 

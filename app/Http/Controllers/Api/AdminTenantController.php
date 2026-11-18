@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Superadmin\StoreTenantRequest;
-use App\Http\Requests\Superadmin\UpdateDeployStatusRequest;
-use App\Http\Requests\Superadmin\UpdateSubscriptionRequest;
-use App\Http\Requests\Superadmin\UpdateThemeRequest;
+use App\Http\Requests\Admin\StoreTenantRequest;
+use App\Http\Requests\Admin\UpdateDeployStatusRequest;
+use App\Http\Requests\Admin\UpdateSubscriptionRequest;
+use App\Http\Requests\Admin\UpdateThemeRequest;
 use App\Http\Resources\TenantResource;
 use App\Models\Tenant;
 use App\Services\Contracts\TenantRegistrationServiceInterface;
@@ -14,7 +14,11 @@ use App\Services\Contracts\TenantServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
-class SuperadminController extends Controller
+/**
+ * Upravljanje firmama (samo admin, middleware CheckAdmin): lista, ručno otvaranje i brisanje, pretplata,
+ * status deploy-a i tema. Plaćanja nema, pa admin ručno menja pretplatu.
+ */
+class AdminTenantController extends Controller
 {
     public function __construct(private readonly TenantServiceInterface $tenants) {}
 
@@ -29,7 +33,7 @@ class SuperadminController extends Controller
         /** @var array{name: string, email: string, password: string, app_name: string, subdomain?: string|null} $data */
         $data = $request->validated();
 
-        return TenantResource::make($registration->createBySuperadmin($data)->load('users'))
+        return TenantResource::make($registration->createByAdmin($data)->load('users'))
             ->response()
             ->setStatusCode(201);
     }

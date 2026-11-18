@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AdminTenantController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\ClientController;
@@ -12,7 +13,6 @@ use App\Http\Controllers\Api\PushController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\ServiceController;
 use App\Http\Controllers\Api\SlotController;
-use App\Http\Controllers\Api\SuperadminController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\WorkerController;
 use App\Http\Controllers\Api\WorkerScheduleController;
@@ -31,6 +31,7 @@ Route::post('/auth/email/resend', [EmailVerificationController::class, 'resend']
 Route::post('/auth/password/forgot', [PasswordResetController::class, 'forgot'])->middleware('throttle:6,1');
 Route::post('/auth/password/reset', [PasswordResetController::class, 'reset'])->middleware('throttle:10,1');
 Route::get('/push/vapid-public-key', [PushController::class, 'vapidPublicKey']);
+Route::get('/tenant/manifest', [TenantController::class, 'manifest'])->middleware('throttle:60,1');
 Route::get('/bookings/{token}/confirm-by-link', [BookingController::class, 'confirmByLink'])
     ->name('bookings.confirm-by-link');
 Route::post('/bookings/{token}/push-subscription', [BookingController::class, 'storePushSubscription']);
@@ -41,15 +42,15 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
     Route::patch('/clients/{client}/suspend', [AdminController::class, 'suspendClient']);
 });
 
-// Superadmin rute — ne vezane za tenant
-Route::middleware(['auth:sanctum', 'superadmin'])->prefix('superadmin')->group(function () {
-    Route::get('/tenants', [SuperadminController::class, 'tenants']);
-    Route::post('/tenants', [SuperadminController::class, 'storeTenant']);
-    Route::get('/tenants/{tenant}', [SuperadminController::class, 'showTenant']);
-    Route::delete('/tenants/{tenant}', [SuperadminController::class, 'destroyTenant']);
-    Route::patch('/tenants/{tenant}/subscription', [SuperadminController::class, 'updateSubscription']);
-    Route::patch('/tenants/{tenant}/deploy-status', [SuperadminController::class, 'updateDeployStatus']);
-    Route::patch('/tenants/{tenant}/theme', [SuperadminController::class, 'updateTheme']);
+// Admin: upravljanje firmama i pretplatom — ne vezano za tenant
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/tenants')->group(function () {
+    Route::get('/', [AdminTenantController::class, 'tenants']);
+    Route::post('/', [AdminTenantController::class, 'storeTenant']);
+    Route::get('/{tenant}', [AdminTenantController::class, 'showTenant']);
+    Route::delete('/{tenant}', [AdminTenantController::class, 'destroyTenant']);
+    Route::patch('/{tenant}/subscription', [AdminTenantController::class, 'updateSubscription']);
+    Route::patch('/{tenant}/deploy-status', [AdminTenantController::class, 'updateDeployStatus']);
+    Route::patch('/{tenant}/theme', [AdminTenantController::class, 'updateTheme']);
 });
 
 // Tenant config — tenant opcionalan (admin nema tenant)

@@ -141,13 +141,13 @@ class LocalizationTest extends TestCase
             ->assertJsonPath('message', 'Traženi sadržaj nije pronađen.');
     }
 
-    public function test_superadmin_forbidden_message_is_translated(): void
+    public function test_admin_forbidden_message_is_translated(): void
     {
         $client = User::factory()->client()->create(['tenant_id' => $this->tenant->id]);
 
         $this->actingAs($client)
             ->withHeader('Accept-Language', 'sr')
-            ->getJson('/api/superadmin/tenants')
+            ->getJson('/api/admin/tenants')
             ->assertForbidden()
             ->assertJsonPath('message', 'Nemate dozvolu za ovu radnju.');
     }

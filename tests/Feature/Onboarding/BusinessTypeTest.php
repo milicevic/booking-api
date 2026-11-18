@@ -23,7 +23,7 @@ class BusinessTypeTest extends TestCase
         $this->postJson('/api/register', [
             'name' => 'Ana Anić',
             'email' => 'ana@salon.com',
-            'password' => 'tajna1234',
+            'password' => 'Tajna12345',
             'app_name' => 'Moj Salon',
             'business_type' => 'barber',
         ])->assertCreated();
@@ -38,7 +38,7 @@ class BusinessTypeTest extends TestCase
         $this->postJson('/api/register', [
             'name' => 'Ana Anić',
             'email' => 'ana@salon.com',
-            'password' => 'tajna1234',
+            'password' => 'Tajna12345',
             'app_name' => 'Moj Salon',
             'business_type' => 'bakery',
         ])->assertUnprocessable()->assertJsonValidationErrors('business_type');

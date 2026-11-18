@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Password;
 
 class AcceptInviteRequest extends FormRequest
 {
@@ -18,7 +19,7 @@ class AcceptInviteRequest extends FormRequest
     {
         return [
             'invite_token' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', Password::defaults()],
         ];
     }
 }

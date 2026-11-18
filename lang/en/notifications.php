@@ -132,4 +132,9 @@ return [
         'line2' => 'Click the button to set your password and access your account.',
         'line3' => 'The link is valid for 7 days. If you did not expect this email, you may ignore it.',
     ],
+
+    'test_push' => [
+        'title' => 'Test notification',
+        'body' => 'Notifications from :app_name work on this device.',
+    ],
 ];

@@ -71,20 +71,20 @@ class PasswordResetTest extends TestCase
         $this->postJson('/api/auth/password/reset', [
             'token' => $token,
             'email' => 'ana@salon.com',
-            'password' => 'nova-lozinka',
-            'password_confirmation' => 'nova-lozinka',
+            'password' => 'NovaLozinka1',
+            'password_confirmation' => 'NovaLozinka1',
         ])->assertOk();
 
         $user = $this->user->fresh();
         $this->assertSame(0, $user->tokens()->count());
         $this->assertNotNull($user->email_verified_at);
-        $this->postJson('/api/auth/login', ['email' => 'ana@salon.com', 'password' => 'nova-lozinka'])->assertOk();
+        $this->postJson('/api/auth/login', ['email' => 'ana@salon.com', 'password' => 'NovaLozinka1'])->assertOk();
     }
 
     public function test_token_works_only_once(): void
     {
         $token = $this->requestToken();
-        $payload = ['token' => $token, 'email' => 'ana@salon.com', 'password' => 'nova-lozinka', 'password_confirmation' => 'nova-lozinka'];
+        $payload = ['token' => $token, 'email' => 'ana@salon.com', 'password' => 'NovaLozinka1', 'password_confirmation' => 'NovaLozinka1'];
 
         $this->postJson('/api/auth/password/reset', $payload)->assertOk();
         $this->postJson('/api/auth/password/reset', $payload)->assertUnprocessable();
@@ -93,7 +93,7 @@ class PasswordResetTest extends TestCase
     public function test_invalid_or_expired_token_is_rejected(): void
     {
         $token = $this->requestToken();
-        $payload = ['email' => 'ana@salon.com', 'password' => 'nova-lozinka', 'password_confirmation' => 'nova-lozinka'];
+        $payload = ['email' => 'ana@salon.com', 'password' => 'NovaLozinka1', 'password_confirmation' => 'NovaLozinka1'];
 
         $this->withHeader('Accept-Language', 'sr')
             ->postJson('/api/auth/password/reset', ['token' => 'pogresan', ...$payload])

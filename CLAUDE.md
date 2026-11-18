@@ -188,9 +188,9 @@ Multi-tenant, white-label booking SaaS API. Frontend is the separate repo `booki
 
 ## Multi-tenancy (don't break these)
 - `ResolveTenant` middleware (`resolve.tenant`, mode `required` or `optional`) finds the tenant by request host (custom domain / subdomain) or the `X-Tenant-Subdomain` header, and stores it in `CurrentTenantInterface`.
-- Every model with `tenant_id` uses the `BelongsToTenant` trait + `TenantScope` (auto-filter and auto-set `tenant_id`). Scope is bypassed for `superadmin` and when there is no current tenant. Don't hand-write `where('tenant_id', ...)` instead of the trait, and don't use `withoutGlobalScopes()` without a comment saying why.
-- `superadmin` and `admin` have `tenant_id = null`. `PersonalAccessToken` is a custom model so Sanctum lookups ignore the tenant scope.
-- `CheckSubscription` returns 403 for `expired` / `canceled` tenants. `CheckSuperadmin` guards `/api/superadmin/*`. `HandleTenantCors` handles per-tenant CORS.
+- Every model with `tenant_id` uses the `BelongsToTenant` trait + `TenantScope` (auto-filter and auto-set `tenant_id`). Scope is bypassed for `admin` and when there is no current tenant. Don't hand-write `where('tenant_id', ...)` instead of the trait, and don't use `withoutGlobalScopes()` without a comment saying why.
+- `admin` has `tenant_id = null`. `PersonalAccessToken` is a custom model so Sanctum lookups ignore the tenant scope.
+- `CheckSubscription` returns 403 for `expired` / `canceled` tenants. `CheckAdmin` (alias `admin`) guards `/api/admin/tenants/*`. `HandleTenantCors` handles per-tenant CORS.
 - Every new endpoint or model that touches tenant data needs a test proving tenant A can't see tenant B's data.
 
 ## Time and dates
@@ -200,11 +200,11 @@ Multi-tenant, white-label booking SaaS API. Frontend is the separate repo `booki
 
 ## Auth
 - Sanctum bearer tokens. Login checks go through `User::loginDeniedReason()` (`suspended`, `email_not_verified`, `wrong_tenant`), shared by password and Google login.
-- Password accounts must verify their email. Registration sends `VerifyEmailAddress` and doesn't issue a token. The signed link `GET /api/auth/email/verify/{id}/{hash}` (route `verification.verify`) redirects to `/admin/login?verified=1|invalid` on the tenant site, and `WelcomeClient` is sent after verification. Accepting a worker invite, Google login and superadmin-created accounts count as verified.
+- Password accounts must verify their email. Registration sends `VerifyEmailAddress` and doesn't issue a token. The signed link `GET /api/auth/email/verify/{id}/{hash}` (route `verification.verify`) redirects to `/admin/login?verified=1|invalid` on the tenant site, and `WelcomeClient` is sent after verification. Accepting a worker invite, Google login and admin-created accounts count as verified.
 - Google login is stateless Socialite with one central callback (`/api/auth/google/callback`). The original host, intent and expiry travel in an encrypted `state`, and the result is redirected to `{host}/auth/callback#token=…` or `#error=<code>` (fragment only). Accounts are created only in the `register` intent, via `TenantRegistrationServiceInterface::createWithClient()`; never create a user without `tenant_id` from a public flow.
 
 ## Roles (`UserRole` enum)
-`superadmin` (platform owner), `admin` (platform admin: list/suspend clients), `client` (business owner), `worker` (belongs to a client via `client_id`), plus `end_user` (no account, identified by the booking token).
+`admin` (platform owner: manages all businesses at `/api/admin/tenants/*`, subscriptions, lists/suspends clients; there is no separate `superadmin` anymore), `client` (business owner), `worker` (belongs to a client via `client_id`), plus `end_user` (no account, identified by the booking token).
 - Workers can view services and bookings but can't create/edit/delete services. Slot editing only when `can_edit_slots`.
 - Services are tenant-level and attached to workers through the `worker_services` pivot.
 - A worker may edit only their own bio and photo (`UserPolicy::updateProfile`, `PATCH /workers/{id}/profile`, `POST|DELETE /workers/{id}/photo`). Name, email and permissions stay client-only (`PUT /workers/{id}`).
@@ -233,7 +233,7 @@ The full booking flow and its rules are in `docs/booking-flow.md`; update it whe
 ## Not done yet (verify in code before relying on it)
 - Job that expires past unconfirmed bookings.
 - Cancelling a booking without a token (lookup by name + email/phone).
-- No payment gateway by design: the superadmin changes `subscription_status` manually.
+- No payment gateway by design: the admin changes `subscription_status` manually (`PATCH /api/admin/tenants/{id}/subscription`).
 
 ## Don'ts
 - Don't push to `main`, run destructive migrations, or add dependencies without asking.

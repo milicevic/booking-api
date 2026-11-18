@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Middleware\CheckAdmin;
 use App\Http\Middleware\CheckSubscription;
-use App\Http\Middleware\CheckSuperadmin;
 use App\Http\Middleware\HandleTenantCors;
 use App\Http\Middleware\ResolveTenant;
 use App\Http\Middleware\SecurityHeaders;
@@ -31,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'resolve.tenant' => ResolveTenant::class,
             'check.subscription' => CheckSubscription::class,
-            'superadmin' => CheckSuperadmin::class,
+            'admin' => CheckAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -22,8 +22,7 @@ Svaki tenant (klijent) dobija izolovanu instancu aplikacije na sopstvenoj subdom
 
 | Tip | Opis |
 |-----|------|
-| `superadmin` | Vlasnik platforme, upravlja svim tenantima |
-| `admin` | Platform-level admin, može da pregleda/suspenduje klijente |
+| `admin` | Vlasnik platforme: upravlja svim tenantima i pretplatama, pregleda/suspenduje klijente (bivši `superadmin` je spojen sa njim) |
 | `client` | Vlasnik biznisa, upravlja radnicima, servisima i slotovima |
 | `worker` | Radnik klijenta, pregleda termine i svoje servise |
 | `end_user` | Krajnji korisnik, rezerviše termine (bez naloga) |
@@ -42,9 +41,9 @@ tenants
   - timestamps
 
 users
-  - id, tenant_id (FK, nullable za superadmin/admin)
+  - id, tenant_id (FK, nullable za admin)
   - name, email, password (nullable za workere bez lozinke)
-  - role (enum: superadmin | admin | client | worker)
+  - role (enum: admin | client | worker)
   - client_id (FK users, za workere — kojoj firmi pripadaju)
   - can_edit_slots (boolean), is_suspended (boolean)
   - invite_token (nullable, unique — za worker invite flow)
@@ -94,12 +93,12 @@ bookings
 
 - Tenant model + migracije
 - `BelongsToTenant` trait — automatski filtrira po `tenant_id`, auto-setuje pri kreiranju
-- `TenantScope` global scope — bypass za `superadmin`, bypass bez tenanta ako nema `current_tenant`
+- `TenantScope` global scope — bypass za `admin`, bypass bez tenanta ako nema `current_tenant`
 - `ResolveTenant` middleware — detektuje tenant po `custom_domain`, subdomeni, ili `X-Tenant-Subdomain` headeru
 - `CheckSubscription` middleware — blokira `expired`/`canceled` tenante (403)
-- `CheckSuperadmin` middleware — dozvoljava samo superadmin rolu
+- `CheckAdmin` middleware (alias `admin`) — dozvoljava samo admin rolu
 - `PersonalAccessToken` model — Sanctum token lookup bez global scope (za platform korisnike bez tenanta)
-- Superadmin rute (`/api/superadmin/tenants/*`) — CRUD tenanta, upravljanje subscription i deploy statusom, theming
+- Admin rute za firme (`/api/admin/tenants/*`) — CRUD tenanta, upravljanje subscription i deploy statusom, theming
 - Admin rute (`/api/admin/clients/*`) — pregled i suspenzija klijenata
 - Scheduled job `php artisan subscriptions:expire-trials` — menja `trialing → expired` dnevno
 
@@ -162,7 +161,7 @@ bookings
 ### Faza 7 — Theming ✅
 
 - `GET /api/tenant/config` — vraća theming podatke (app_name, boje, tema, subdomena, subscription_status)
-- Superadmin menja theming per tenant
+- Admin menja theming per tenant
 - Klijent menja vlastiti theming
 
 ---
@@ -178,12 +177,12 @@ POST   /api/auth/login
 GET    /api/admin/clients
 PATCH  /api/admin/clients/{client}/suspend
 
-# Superadmin
-GET    /api/superadmin/tenants
-GET    /api/superadmin/tenants/{tenant}
-PATCH  /api/superadmin/tenants/{tenant}/subscription
-PATCH  /api/superadmin/tenants/{tenant}/deploy-status
-PATCH  /api/superadmin/tenants/{tenant}/theme
+# Admin — firme
+GET    /api/admin/tenants
+GET    /api/admin/tenants/{tenant}
+PATCH  /api/admin/tenants/{tenant}/subscription
+PATCH  /api/admin/tenants/{tenant}/deploy-status
+PATCH  /api/admin/tenants/{tenant}/theme
 
 # Tenant config (opcioni tenant)
 GET    /api/tenant/config
@@ -233,7 +232,7 @@ DELETE /api/services/{service}/workers/{worker}
 
 ## Napomene
 
-- Superadmin i Admin nemaju `tenant_id` (null) — slobodni su od tenanta
+- Admin nema `tenant_id` (null) — slobodni su od tenanta
 - Worker može da pregleda servise ali ne može da ih kreira/menja
 - Krajnji korisnik nema nalog, identifikuje se tokenom iz emaila
 - Trial period: 7 dana od registracije

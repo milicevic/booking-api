@@ -8,15 +8,14 @@ enum UserRole: string
 {
     use HasValues;
 
-    case Superadmin = 'superadmin';
     case Admin = 'admin';
     case Client = 'client';
     case Worker = 'worker';
 
-    /** Platformski korisnici se prijavljuju sa bilo koje adrese, ostali samo na sajtu svoje firme. */
+    /** Platformski korisnik (admin) se prijavljuje sa bilo koje adrese, ostali samo na sajtu svoje firme. */
     public function isPlatformUser(): bool
     {
-        return in_array($this, [self::Superadmin, self::Admin], true);
+        return $this === self::Admin;
     }
 
     /** Uloge koje upravljaju katalogom usluga firme. */

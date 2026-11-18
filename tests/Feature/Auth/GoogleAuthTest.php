@@ -113,6 +113,25 @@ class GoogleAuthTest extends TestCase
             ->assertRedirect('https://slotres.click/auth/callback#error=google_failed');
     }
 
+    public function test_redirect_rejects_taken_business_name(): void
+    {
+        Tenant::factory()->create(['app_name' => 'Salon Ana']);
+
+        $this->get('/api/auth/google/redirect?intent=register&host=slotres.click&app_name='.urlencode('salon ana '))
+            ->assertRedirect('https://slotres.click/auth/callback#error=name_taken');
+    }
+
+    public function test_register_with_name_taken_meanwhile_returns_name_taken(): void
+    {
+        $this->fakeGoogleUser();
+        Tenant::factory()->create(['app_name' => 'Salon Ana']);
+
+        $this->get('/api/auth/google/callback?state='.urlencode($this->state(['intent' => 'register', 'app_name' => 'SALON ANA'])))
+            ->assertRedirect('https://slotres.click/auth/callback#error=name_taken');
+
+        $this->assertDatabaseMissing('users', ['email' => 'ana@test.com']);
+    }
+
     public function test_existing_google_user_can_login(): void
     {
         $tenant = Tenant::factory()->create(['subdomain' => 'salon-ana']);
