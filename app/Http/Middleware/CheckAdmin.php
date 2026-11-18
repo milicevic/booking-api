@@ -7,16 +7,17 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class CheckSuperadmin
+/**
+ * Propušta samo platformskog admina (uloga admin).
+ */
+class CheckAdmin
 {
     /**
-     * Handle an incoming request.
-     *
      * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user() || $request->user()->role !== UserRole::Superadmin) {
+        if (! $request->user() || $request->user()->role !== UserRole::Admin) {
             return response()->json(['message' => __('http.403')], Response::HTTP_FORBIDDEN);
         }
 

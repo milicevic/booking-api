@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Rules\UniqueBusinessName;
 use App\Services\Contracts\GoogleAuthServiceInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,6 +50,11 @@ class GoogleAuthController extends Controller
         }
 
         $appName = $request->query('app_name');
+
+        // Zauzet naziv firme: nema smisla slati korisnika na Google
+        if ($intent === 'register' && is_string($appName) && UniqueBusinessName::isTaken($appName)) {
+            return $this->frontendRedirect($host, ['error' => 'name_taken']);
+        }
         $state = $this->google->encodeState([
             'intent' => $intent,
             'host' => $host,

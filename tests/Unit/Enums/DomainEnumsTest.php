@@ -24,9 +24,8 @@ class DomainEnumsTest extends TestCase
         $this->assertFalse(BookingStatus::Cancelled->isActive());
     }
 
-    public function test_platform_users_are_superadmin_and_admin(): void
+    public function test_only_admin_is_platform_user(): void
     {
-        $this->assertTrue(UserRole::Superadmin->isPlatformUser());
         $this->assertTrue(UserRole::Admin->isPlatformUser());
         $this->assertFalse(UserRole::Client->isPlatformUser());
         $this->assertFalse(UserRole::Worker->isPlatformUser());
@@ -37,7 +36,6 @@ class DomainEnumsTest extends TestCase
         $this->assertTrue(UserRole::Client->managesServices());
         $this->assertTrue(UserRole::Admin->managesServices());
         $this->assertFalse(UserRole::Worker->managesServices());
-        $this->assertFalse(UserRole::Superadmin->managesServices());
     }
 
     public function test_expired_and_canceled_subscriptions_block_access(): void

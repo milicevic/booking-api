@@ -77,7 +77,7 @@ class CaptchaTest extends TestCase
         Http::fake(['challenges.cloudflare.com/*' => Http::response(['success' => false])]);
 
         $this->postJson('/api/register', [
-            'name' => 'Ana', 'email' => 'ana@salon.com', 'password' => 'tajna1234', 'app_name' => 'Salon',
+            'name' => 'Ana', 'email' => 'ana@salon.com', 'password' => 'Tajna12345', 'app_name' => 'Salon',
         ])->assertUnprocessable()->assertJsonValidationErrors('captcha_token');
     }
 

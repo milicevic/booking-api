@@ -65,7 +65,7 @@ class TenantRegistrationService implements TenantRegistrationServiceInterface
         return [$tenant, $client];
     }
 
-    public function createBySuperadmin(array $data): Tenant
+    public function createByAdmin(array $data): Tenant
     {
         [$tenant, $client] = $this->createWithClient($data, $data);
 

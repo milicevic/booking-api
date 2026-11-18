@@ -11,11 +11,29 @@ use App\Services\Contracts\CurrentTenantInterface;
 use App\Services\Contracts\LogoServiceInterface;
 use App\Services\Contracts\TenantServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 
 class TenantController extends Controller
 {
     public function __construct(private readonly CurrentTenantInterface $currentTenant) {}
+
+    /**
+     * Web manifest za instalaciju sajta kao aplikacije (PWA). Frontend je jedan build za sve firme, pa
+     * naziv i boju daje API; adresa sajta stiže kao ?origin=https://salon.slotres.click.
+     */
+    public function manifest(Request $request, TenantServiceInterface $tenants): JsonResponse
+    {
+        $origin = $request->query('origin');
+        $valid = is_string($origin) && filter_var($origin, FILTER_VALIDATE_URL) && in_array(parse_url($origin, PHP_URL_SCHEME), ['https', 'http'], true);
+        $manifest = $valid ? $tenants->webManifest($origin) : null;
+
+        if (! $manifest) {
+            return response()->json(['message' => __('http.404')], 404);
+        }
+
+        return response()->json($manifest, 200, ['Content-Type' => 'application/manifest+json', 'Cache-Control' => 'public, max-age=3600']);
+    }
 
     /** Javna podešavanja sajta; null kada zahtev nije sa sajta neke firme. */
     public function config(): JsonResponse|TenantConfigResource

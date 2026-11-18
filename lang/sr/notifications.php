@@ -132,4 +132,9 @@ return [
         'line2' => 'Klikom na dugme postavite svoju lozinku i pristupite nalogu.',
         'line3' => 'Link važi 7 dana. Ako niste očekivali ovaj email, možete ga ignorisati.',
     ],
+
+    'test_push' => [
+        'title' => 'Probno obaveštenje',
+        'body' => 'Obaveštenja iz :app_name rade na ovom uređaju.',
+    ],
 ];

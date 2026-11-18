@@ -29,7 +29,7 @@ class EmailVerificationTest extends TestCase
         return User::factory()->client()->unverified()->create([
             'tenant_id' => $this->tenant->id,
             'email' => 'ana@salon.com',
-            'password' => bcrypt('tajna1234'),
+            'password' => bcrypt('Tajna12345'),
         ]);
     }
 
@@ -45,7 +45,7 @@ class EmailVerificationTest extends TestCase
     {
         $this->unverifiedClient();
 
-        $this->postJson('/api/auth/login', ['email' => 'ana@salon.com', 'password' => 'tajna1234'])
+        $this->postJson('/api/auth/login', ['email' => 'ana@salon.com', 'password' => 'Tajna12345'])
             ->assertForbidden()
             ->assertJsonPath('code', 'email_not_verified');
     }
@@ -70,7 +70,7 @@ class EmailVerificationTest extends TestCase
         $this->assertNotNull($user->fresh()->email_verified_at);
         Notification::assertSentTo($user, WelcomeClient::class);
 
-        $this->postJson('/api/auth/login', ['email' => 'ana@salon.com', 'password' => 'tajna1234'])
+        $this->postJson('/api/auth/login', ['email' => 'ana@salon.com', 'password' => 'Tajna12345'])
             ->assertOk();
     }
 
@@ -149,7 +149,7 @@ class EmailVerificationTest extends TestCase
         ]);
 
         $this->withHeader('X-Tenant-Subdomain', 'salon-ana')
-            ->postJson('/api/auth/accept-invite', ['invite_token' => 'pozivnica-123', 'password' => 'tajna1234'])
+            ->postJson('/api/auth/accept-invite', ['invite_token' => 'pozivnica-123', 'password' => 'Tajna12345'])
             ->assertOk();
 
         $this->assertNotNull($worker->fresh()->email_verified_at);

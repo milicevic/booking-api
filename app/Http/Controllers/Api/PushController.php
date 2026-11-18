@@ -16,7 +16,14 @@ class PushController extends Controller
     /** VAPID javni ključ, potreban pregledaču za pretplatu. */
     public function vapidPublicKey(): JsonResponse
     {
-        return response()->json(['vapid_public_key' => $this->push->vapidPublicKey()]);
+        $key = $this->push->vapidPublicKey();
+
+        // Bez ključa pregledač ne može da se pretplati; jasna greška umesto null
+        if (! $key) {
+            return response()->json(['message' => __('messages.push_not_configured')], 503);
+        }
+
+        return response()->json(['vapid_public_key' => $key]);
     }
 
     public function subscribe(SubscribePushRequest $request): JsonResponse

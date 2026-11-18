@@ -70,7 +70,7 @@ class User extends Authenticatable implements HasLocalePreference
 
     /**
      * Razlog zbog kog korisnik ne sme da se prijavi, ili null ako sme.
-     * Platformski korisnici (superadmin, admin) se prijavljuju sa bilo koje adrese, ostali samo na sajtu svoje firme.
+     * Platformski korisnik (admin) se prijavljuje sa bilo koje adrese, ostali samo na sajtu svoje firme.
      *
      * @return 'suspended'|'email_not_verified'|'wrong_tenant'|null
      */
