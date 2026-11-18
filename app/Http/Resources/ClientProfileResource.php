@@ -26,6 +26,7 @@ class ClientProfileResource extends JsonResource
             'customer_contact' => $this->customer_contact,
             'confirmation_mode' => $this->confirmation_mode,
             'reschedule_cutoff_hours' => $this->reschedule_cutoff_hours,
+            'calendar_invites' => $this->calendar_invites,
             'onboarding_completed_at' => $this->onboarding_completed_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

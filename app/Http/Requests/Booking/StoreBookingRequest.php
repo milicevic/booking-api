@@ -25,8 +25,10 @@ class StoreBookingRequest extends FormRequest
             // Rezervacija je uvek za uslugu kod radnika (radnik dolazi iz termina)
             'service_id' => ['required', 'integer', 'exists:services,id'],
             'customer_name' => ['required', 'string', 'max:255'],
+            // Da li je telefon obavezan određuje pravilo vlasnika (CustomerContact, podrazumevano da);
+            // kada je unet, mora biti u međunarodnom obliku (+381641234567): pozivni broj kupac bira iz liste
+            'customer_phone' => ['nullable', 'string', 'regex:/^\+[1-9]\d{6,14}$/'],
             'customer_email' => ['nullable', 'email'],
-            'customer_phone' => ['nullable', 'string'],
             'note' => ['nullable', 'string'],
         ];
     }
@@ -38,6 +40,7 @@ class StoreBookingRequest extends FormRequest
     {
         return [
             'service_id.required' => __('messages.service_required'),
+            'customer_phone.regex' => __('messages.phone_invalid'),
         ];
     }
 }

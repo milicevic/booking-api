@@ -48,6 +48,7 @@ class ConfirmationModeTest extends TestCase
             'slot_id' => $this->slot->id,
             'service_id' => $this->service->id,
             'customer_name' => 'Ana',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ])->assertCreated();
 

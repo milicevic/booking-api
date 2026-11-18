@@ -58,6 +58,7 @@ class BookingRescheduledCustomer extends Notification
             ->line(__("{$t}.line1"))
             ->bookingDetails($this->booking)
             ->action(__("{$t}.action"), $this->booking->manageUrl())
+            ->calendarInvite($this->booking)
             ->line(__("{$t}.line2"));
     }
 }

@@ -8,11 +8,13 @@ use App\Services\Auth\GoogleAuthService;
 use App\Services\Auth\PasswordResetService;
 use App\Services\Auth\SanctumTokenIssuer;
 use App\Services\Auth\TurnstileCaptcha;
+use App\Services\Booking\BookingCalendar;
 use App\Services\Booking\BookingNotifier;
 use App\Services\Booking\BookingService;
 use App\Services\Catalog\ServiceCatalogService;
 use App\Services\Client\ClientService;
 use App\Services\Contracts\AuthServiceInterface;
+use App\Services\Contracts\BookingCalendarInterface;
 use App\Services\Contracts\BookingNotifierInterface;
 use App\Services\Contracts\BookingServiceInterface;
 use App\Services\Contracts\CaptchaVerifierInterface;
@@ -65,6 +67,7 @@ class DomainServiceProvider extends ServiceProvider
         AuthServiceInterface::class => AuthService::class,
         BookingNotifierInterface::class => BookingNotifier::class,
         BookingServiceInterface::class => BookingService::class,
+        BookingCalendarInterface::class => BookingCalendar::class,
         WorkerScheduleServiceInterface::class => WorkerScheduleService::class,
         ClientServiceInterface::class => ClientService::class,
         CurrentTenantInterface::class => CurrentTenant::class,

@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Enums\ConfirmationMode;
 use App\Models\Booking;
 use App\Models\User;
+use App\Notifications\BookingCancelledClient;
 use App\Notifications\BookingCancelledCustomer;
 use App\Notifications\BookingConfirmedClient;
 use App\Notifications\BookingConfirmedCustomer;
@@ -45,6 +46,11 @@ class BookingNotifier implements BookingNotifierInterface
         if ($booking->customer_email) {
             $booking->notify(new BookingCancelledCustomer($booking));
         }
+    }
+
+    public function cancelledByCustomer(Booking $booking): void
+    {
+        $booking->slot->worker->client?->notify(new BookingCancelledClient($booking));
     }
 
     public function rescheduled(Booking $booking): void
