@@ -12,11 +12,13 @@ use App\Http\Requests\Push\SubscribePushRequest;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\PublicBookingResource;
+use App\Services\Contracts\BookingCalendarInterface;
 use App\Services\Contracts\BookingServiceInterface;
 use App\Services\Contracts\PushSubscriptionServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
 class BookingController extends Controller
@@ -61,7 +63,7 @@ class BookingController extends Controller
     /** Javno — kupac otkazuje preko tokena */
     public function cancel(string $token): MessageResource
     {
-        $this->bookings->cancel($token);
+        $this->bookings->cancel($token, notifyCustomer: true);
 
         return MessageResource::make(__('messages.booking_cancelled'));
     }
@@ -106,6 +108,20 @@ class BookingController extends Controller
     public function confirmByLink(ConfirmByLinkRequest $request, string $token): RedirectResponse
     {
         return redirect()->away(BookingReviewController::signedUrl($token, $request->action()));
+    }
+
+    /** Javno — .ics za kalendar kupca (za otkazanu/odbijenu rezervaciju: otkazivanje događaja) */
+    public function calendar(string $token, BookingCalendarInterface $calendar): Response
+    {
+        $booking = $this->bookings->findByToken($token, ['slot.worker.client.clientProfile', 'service', 'tenant']);
+
+        abort_unless($calendar->enabled($booking), 404);
+
+        return response($calendar->ics($booking), 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'inline; filename="termin.ics"',
+            'Cache-Control' => 'no-store',
+        ]);
     }
 
     /** Javno — kupac registruje push pretplatu za svoju rezervaciju */

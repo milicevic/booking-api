@@ -11,11 +11,17 @@ enum CustomerContact: string
 {
     use HasValues;
 
-    /** Bar jedno: email ili telefon (podrazumevano) */
-    case EmailOrPhone = 'email_or_phone';
-    case Both = 'both';
+    /** Telefon obavezan, email opcion (podrazumevano) */
     case Phone = 'phone';
+    case Both = 'both';
+    case EmailOrPhone = 'email_or_phone';
     case Email = 'email';
+
+    /** Pravilo kada ga vlasnik nije menjao. */
+    public static function default(): self
+    {
+        return self::Phone;
+    }
 
     /** Ključ prevoda greške ako kontakt kupca ne ispunjava pravilo, inače null. */
     public function violation(?string $email, ?string $phone): ?string

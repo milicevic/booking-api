@@ -34,12 +34,12 @@ nudi kupcima i ne ulazi u računanje slobodnih vremena. Rezervacije koje su već
 - **Uslugu** (`service_id`): obavezna. Mora biti aktivna i dodeljena radniku iz termina, inače 422.
 - **Vreme početka** (`start_time`, `HH:MM`): mora biti jedno od slobodnih vremena za tu uslugu, inače 409. Kraj računa backend: početak + trajanje usluge.
 - **Kupac:** ime (obavezno) i kontakt po pravilu firme (`client_profiles.customer_contact`, enum `CustomerContact`). Pravilo bira vlasnik na Pregledu u adminu:
-  - `email_or_phone` (podrazumevano): bar jedno od toga;
+  - `phone` (podrazumevano): telefon obavezan, email opcion;
   - `both`: i email i telefon;
-  - `phone`: telefon obavezan, email opcion;
+  - `email_or_phone`: bar jedno od toga;
   - `email`: email obavezan, telefon opcion.
 
-  Backend proverava pravilo pri svakoj rezervaciji (422 sa porukom šta nedostaje). Strana za zakazivanje ga dobija u `/api/tenant/config` (`customer_contact`), označava obavezna polja i proverava ih pre slanja. Napomena je uvek opciona.
+  Backend proverava pravilo pri svakoj rezervaciji (422 sa porukom šta nedostaje). Strana za zakazivanje ga dobija u `/api/tenant/config` (`customer_contact`), označava obavezna polja i proverava ih pre slanja. Telefon se uvek šalje u međunarodnom obliku (`+381641234567`, inače 422): na strani za zakazivanje kupac bira pozivni broj iz liste (podrazumevano Srbija +381) i unosi broj. Napomena je uvek opciona.
 
 Rezervacije bez usluge više ne nastaju. Stari redovi u bazi mogu imati `service_id = null` i normalno se prikazuju.
 
@@ -129,5 +129,10 @@ Pregled i otkazivanje po tokenu. Otkazati se može rezervacija koja čeka potvrd
   - kupac dobija push i mejl kad mu se rezervacija pomeri;
   - vlasnik dobija mejl, obaveštenje u adminu i push kad kupac otkaže rezervaciju (`BookingCancelledClient`);
   - jezik mejla prati jezik kupca, odnosno firme.
+- **Kalendar kupca** (`BookingCalendar`, ako vlasnik nije isključio `client_profiles.calendar_invites`):
+  - mejl potvrde (i pomeranja) ima prilog `termin.ics` sa podsetnikom 60 min pre početka i dugmad za Google i Apple/Outlook kalendar;
+  - stranica rezervacije nudi „Dodaj u kalendar“: na iPhone-u `.ics` (`GET /api/bookings/{token}/calendar.ics`), na Android-u i webu Google Calendar;
+  - mejl otkazivanja i odbijanja ima `.ics` koji otkazuje isti događaj (isti UID, `METHOD:CANCEL`), pa ga Apple i Outlook uklanjaju; iz Google kalendara (dodatog linkom) događaj se briše ručno;
+  - kupac dobija mejl o otkazivanju i kad sam otkaže na sajtu (ako je ostavio email).
 - **„Vaše rezervacije“:** token se pamti u `localStorage` pregledača (`booking-fe/src/lib/myBookings.ts`) i prikazuje se na početnoj strani sajta firme. Iz pregledača se briše tek kad je rezervacija prošla, otkazana, odbijena ili je server ne prepoznaje (404). Na grešku mreže ostaje. Na drugom uređaju kupac koristi link iz mejla.
 - **Upravljanje:** kupac rezervaciju vidi i otkazuje na `/manage/{token}` (frontend) ili preko linka iz mejla.

@@ -23,7 +23,7 @@ class BookingFactory extends Factory
             'end_time' => fn (array $attributes) => Slot::withoutGlobalScopes()->find($attributes['slot_id'])?->end_time,
             'customer_name' => $this->faker->name(),
             'customer_email' => $this->faker->safeEmail(),
-            'customer_phone' => $this->faker->phoneNumber(),
+            'customer_phone' => '+3816'.$this->faker->numerify('#######'),
             'token' => Str::random(64),
             'status' => 'pending',
             'note' => null,

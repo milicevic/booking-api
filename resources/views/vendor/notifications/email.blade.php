@@ -43,6 +43,11 @@
 </x-mail::button>
 @endisset
 
+{{-- Calendar --}}
+@isset($calendar)
+<x-mail::calendar :calendar="$calendar" :brand="$brand" />
+@endisset
+
 {{-- Outro Lines --}}
 @foreach ($outroLines as $line)
 {{ $line }}

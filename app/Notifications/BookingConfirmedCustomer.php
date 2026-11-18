@@ -56,6 +56,7 @@ class BookingConfirmedCustomer extends Notification
             ->line(__("{$t}.line"))
             ->bookingDetails($this->booking)
             ->action(__("{$t}.action"), $this->booking->manageUrl())
+            ->calendarInvite($this->booking)
             ->salutation(__("{$t}.salutation"));
     }
 }

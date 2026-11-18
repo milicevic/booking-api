@@ -38,6 +38,7 @@ class CaptchaTest extends TestCase
             'slot_id' => $slot->id,
             'service_id' => $service->id,
             'customer_name' => 'Ana',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
             'captcha_token' => $captchaToken,
         ]));

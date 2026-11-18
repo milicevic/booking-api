@@ -23,6 +23,7 @@ return [
     'contact_both_required' => 'Unesite i email i broj telefona.',
     'contact_phone_required' => 'Unesite broj telefona.',
     'contact_email_required' => 'Unesite email.',
+    'phone_invalid' => 'Unesite ispravan broj telefona, sa pozivnim brojem (npr. +381 64 123 4567).',
     'service_unavailable_for_worker' => 'Izabrana usluga nije dostupna kod ovog radnika.',
     'service_unavailable' => 'Ova usluga nije dostupna.',
     'booking_not_pending' => 'Rezervacija nije u statusu čekanja.',

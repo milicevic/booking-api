@@ -149,4 +149,12 @@ return [
         'title' => 'Test notification',
         'body' => 'Notifications from :app_name work on this device.',
     ],
+
+    'calendar' => [
+        'title' => 'Add the booking to your calendar — a reminder arrives :minutes min before it starts.',
+        'google' => 'Google Calendar',
+        'apple' => 'Apple / Outlook calendar',
+        'removed' => 'If you added the booking to your calendar, open the attached termin.ics to remove it (Apple, Outlook). In Google Calendar, delete the event manually.',
+        'description' => "Staff: :worker\nManage booking: :url",
+    ],
 ];

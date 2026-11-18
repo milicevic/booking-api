@@ -35,6 +35,8 @@ Route::get('/tenant/manifest', [TenantController::class, 'manifest'])->middlewar
 Route::get('/bookings/{token}/confirm-by-link', [BookingController::class, 'confirmByLink'])
     ->name('bookings.confirm-by-link');
 Route::post('/bookings/{token}/push-subscription', [BookingController::class, 'storePushSubscription']);
+// Poziv u kalendar (.ics); link se otvara iz mejla ili sa iPhone-a, bez tenant zaglavlja
+Route::get('/bookings/{token}/calendar.ics', [BookingController::class, 'calendar'])->name('bookings.calendar');
 
 // Admin rute — platform-level, ne vezane za tenant
 Route::middleware('auth:sanctum')->prefix('admin')->group(function () {

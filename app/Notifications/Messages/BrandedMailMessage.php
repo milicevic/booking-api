@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Enums\TenantTheme;
 use App\Models\Booking;
 use App\Models\Tenant;
+use App\Services\Contracts\BookingCalendarInterface;
 use Illuminate\Notifications\Messages\MailMessage;
 
 /**
@@ -95,6 +96,31 @@ final class BrandedMailMessage extends MailMessage
         }
 
         return $this->details($rows);
+    }
+
+    /**
+     * Poziv u kalendar, ako ga vlasnik nije isključio: prilog termin.ics (sa podsetnikom; za otkazanu rezervaciju
+     * otkazivanje istog događaja) i dugmad za Google i Apple/Outlook kalendar.
+     */
+    public function calendarInvite(Booking $booking): static
+    {
+        $calendar = app(BookingCalendarInterface::class);
+
+        if (! $calendar->enabled($booking)) {
+            return $this;
+        }
+
+        $cancelled = in_array($booking->status, [BookingStatus::Cancelled, BookingStatus::Rejected], true);
+        $this->attachData($calendar->ics($booking), 'termin.ics', [
+            'mime' => 'text/calendar; charset=utf-8; method='.($cancelled ? 'CANCEL' : 'PUBLISH'),
+        ]);
+        $this->viewData['calendar'] = [
+            'cancelled' => $cancelled,
+            'google' => $cancelled ? null : $calendar->googleUrl($booking),
+            'ics' => $calendar->icsUrl($booking),
+        ];
+
+        return $this;
     }
 
     /**

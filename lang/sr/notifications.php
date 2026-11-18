@@ -149,4 +149,12 @@ return [
         'title' => 'Probno obaveštenje',
         'body' => 'Obaveštenja iz :app_name rade na ovom uređaju.',
     ],
+
+    'calendar' => [
+        'title' => 'Dodajte termin u kalendar — podsetnik stiže :minutes min pre početka.',
+        'google' => 'Google kalendar',
+        'apple' => 'Apple / Outlook kalendar',
+        'removed' => 'Ako ste termin dodali u kalendar, otvorite priloženi fajl termin.ics da ga uklonite (Apple, Outlook). Iz Google kalendara događaj obrišite ručno.',
+        'description' => "Radnik: :worker\nUpravljanje rezervacijom: :url",
+    ],
 ];

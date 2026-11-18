@@ -76,6 +76,7 @@ class BookableTimesTest extends TestCase
             'start_time' => $start,
             'service_id' => $service?->id,
             'customer_name' => 'Ana Anić',
+            'customer_phone' => '+381601234567',
             'customer_email' => 'ana@example.com',
         ]));
     }
