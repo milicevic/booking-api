@@ -174,7 +174,7 @@ Multi-tenant, white-label booking SaaS API. Frontend is the separate repo `booki
 - The host PHP is 8.4 and `composer.json` requires ^8.5, so **every** `php` / `artisan` / `composer` / `vendor/bin/*` command runs in the container: `docker compose exec app <command>`. Running them on the host fails the platform check.
 - Quality gate (end of the Boost block): Pint, then PHPStan (level 6, paths `app/`, `database/factories/`, `routes/`, needs `--memory-limit=1G`), then the test suite.
 - Local mail goes to Mailpit, never to real inboxes. Production (Laravel Cloud) uses `MAIL_MAILER=resend`. `php artisan mail:test you@example.com` prints the mailer in use and the Resend email ID.
-- Scheduled: `subscriptions:expire-trials` (daily, `routes/console.php`). Other commands: `mail:test` (`SendTestMail`), `media:move-to-disk` (`MoveMediaToDisk`).
+- Scheduled (`routes/console.php`): `subscriptions:expire-trials` (daily), `slots:extend-schedules` (daily), `bookings:expire-pending` (every 15 min). Other commands: `mail:test` (`SendTestMail`), `media:move-to-disk` (`MoveMediaToDisk`).
 - Boost lists skills this API doesn't use (Livewire, Volt, Flux, Inertia, Folio, Pennant, Pest, Wayfinder, Blade): ignore them. Tests are PHPUnit and there is no server-rendered UI.
 
 ## Architecture
@@ -231,7 +231,6 @@ The full booking flow and its rules are in `docs/booking-flow.md`; update it whe
 - True concurrent race-condition tests are out of scope; the `lockForUpdate` logic is covered by a sequential conflict test.
 
 ## Not done yet (verify in code before relying on it)
-- Job that expires past unconfirmed bookings.
 - Cancelling a booking without a token (lookup by name + email/phone).
 - No payment gateway by design: the admin changes `subscription_status` manually (`PATCH /api/admin/tenants/{id}/subscription`).
 

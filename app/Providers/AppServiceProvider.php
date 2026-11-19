@@ -53,7 +53,11 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('register', fn (Request $request): Limit => Limit::perHour(10)->by($request->ip()));
 
-        RateLimiter::for('bookings', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
+        // Po IP adresi, i po IP adresi za istu firmu kroz sat (jedan uređaj ne može da zauzme ceo dan jednoj firmi)
+        RateLimiter::for('bookings', fn (Request $request): array => [
+            Limit::perMinute(10)->by($request->ip()),
+            Limit::perHour(30)->by('tenant:'.($request->header('X-Tenant-Subdomain') ?? $request->header('X-Tenant-Domain') ?? $request->getHost()).'|'.$request->ip()),
+        ]);
 
         RateLimiter::for('google', fn (Request $request): Limit => Limit::perMinute(20)->by($request->ip()));
     }

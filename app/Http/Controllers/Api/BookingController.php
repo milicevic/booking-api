@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\DomainException;
 use App\Http\Controllers\BookingReviewController;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Booking\ConfirmByLinkRequest;
@@ -9,6 +10,7 @@ use App\Http\Requests\Booking\ListBookingsRequest;
 use App\Http\Requests\Booking\RescheduleBookingRequest;
 use App\Http\Requests\Booking\StoreBookingRequest;
 use App\Http\Requests\Push\SubscribePushRequest;
+use App\Http\Resources\BlockedCustomerResource;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\PublicBookingResource;
@@ -17,6 +19,7 @@ use App\Services\Contracts\BookingServiceInterface;
 use App\Services\Contracts\PushSubscriptionServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
@@ -108,6 +111,25 @@ class BookingController extends Controller
     public function confirmByLink(ConfirmByLinkRequest $request, string $token): RedirectResponse
     {
         return redirect()->away(BookingReviewController::signedUrl($token, $request->action()));
+    }
+
+    /** Vlasnik blokira kupca iz rezervacije i otkazuje mu sve buduće rezervacije */
+    public function blockCustomer(Request $request, string $token): JsonResponse
+    {
+        $booking = $this->bookings->findByToken($token, ['slot.worker']);
+        Gate::authorize('blockCustomer', $booking);
+
+        if (! $booking->customer_phone && ! $booking->customer_email) {
+            throw DomainException::unprocessable(__('messages.booking_has_no_contact'));
+        }
+
+        $result = $this->bookings->blockCustomer($booking, $request->user());
+
+        return response()->json([
+            'message' => __('messages.customer_blocked', ['count' => $result['cancelled']]),
+            'blocked' => BlockedCustomerResource::make($result['blocked']),
+            'cancelled' => $result['cancelled'],
+        ], 201);
     }
 
     /** Javno — .ics za kalendar kupca (za otkazanu/odbijenu rezervaciju: otkazivanje događaja) */

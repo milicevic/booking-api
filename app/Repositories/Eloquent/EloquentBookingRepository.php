@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Slot;
 use App\Repositories\Contracts\BookingRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as BaseCollection;
 
@@ -55,5 +56,57 @@ class EloquentBookingRepository implements BookingRepositoryInterface
     public function create(array $attributes): Booking
     {
         return Booking::create($attributes);
+    }
+
+    public function countActiveUpcomingForCustomer(?string $phone, ?string $email): int
+    {
+        return $this->activeUpcomingQuery($phone, $email)->count();
+    }
+
+    public function countCreatedSinceForCustomer(?string $phone, ?string $email, \DateTimeInterface $since): int
+    {
+        return $this->customerQuery($phone, $email)->where('created_at', '>=', $since)->count();
+    }
+
+    public function activeUpcomingForCustomer(?string $phone, ?string $email): Collection
+    {
+        return $this->activeUpcomingQuery($phone, $email)->with(['slot.worker', 'service'])->get();
+    }
+
+    public function pendingAcrossTenants(): Collection
+    {
+        // Komanda radi za sve firme odjednom, pa se tenant scope namerno zaobilazi
+        return Booking::withoutGlobalScopes()
+            ->with(['slot.worker.client.clientProfile', 'service', 'tenant'])
+            ->where('status', BookingStatus::Pending)
+            ->get();
+    }
+
+    /**
+     * Isti kupac = isti telefon ili isti email (email bez obzira na velika slova).
+     *
+     * @return Builder<Booking>
+     */
+    private function customerQuery(?string $phone, ?string $email): Builder
+    {
+        return Booking::query()->where(fn ($query) => $query
+            ->when($phone, fn ($q) => $q->orWhere('customer_phone', $phone))
+            ->when($email, fn ($q) => $q->orWhereRaw('lower(customer_email) = ?', [mb_strtolower((string) $email)]))
+            ->when(! $phone && ! $email, fn ($q) => $q->whereRaw('1 = 0')));
+    }
+
+    /**
+     * @return Builder<Booking>
+     */
+    private function activeUpcomingQuery(?string $phone, ?string $email): Builder
+    {
+        // Još nije počela: termin posle danas, ili danas sa početkom posle sadašnjeg trenutka
+        return $this->customerQuery($phone, $email)
+            ->whereIn('status', BookingStatus::active())
+            ->where(fn ($query) => $query
+                ->whereHas('slot', fn ($slot) => $slot->whereDate('date', '>', today()))
+                ->orWhere(fn ($today) => $today
+                    ->where('start_time', '>', now()->format('H:i:s'))
+                    ->whereHas('slot', fn ($slot) => $slot->whereDate('date', today()))));
     }
 }

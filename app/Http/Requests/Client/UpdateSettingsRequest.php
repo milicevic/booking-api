@@ -27,17 +27,21 @@ class UpdateSettingsRequest extends FormRequest
             'onboarding_completed' => ['sometimes', 'boolean'],
             'reschedule_cutoff_hours' => ['sometimes', 'integer', 'min:0', 'max:720'],
             'calendar_invites' => ['sometimes', 'boolean'],
+            // Zaštita od zauzimanja termina; 0 = bez ograničenja
+            'max_active_bookings_per_customer' => ['sometimes', 'integer', 'min:0', 'max:100'],
+            'max_daily_bookings_per_customer' => ['sometimes', 'integer', 'min:0', 'max:100'],
+            'pending_expiry_hours' => ['sometimes', 'integer', 'min:0', 'max:720'],
         ];
     }
 
     /**
      * Polja za client_profiles; onboarding_completed (true/false) postaje vreme završetka ili null.
      *
-     * @return array{auto_confirm_bookings?: bool, customer_contact?: string, confirmation_mode?: string, reschedule_cutoff_hours?: int, calendar_invites?: bool, onboarding_completed_at?: ?Carbon}
+     * @return array{auto_confirm_bookings?: bool, customer_contact?: string, confirmation_mode?: string, reschedule_cutoff_hours?: int, calendar_invites?: bool, max_active_bookings_per_customer?: int, max_daily_bookings_per_customer?: int, pending_expiry_hours?: int, onboarding_completed_at?: ?Carbon}
      */
     public function settings(): array
     {
-        /** @var array{auto_confirm_bookings?: bool, customer_contact?: string, confirmation_mode?: string, reschedule_cutoff_hours?: int, calendar_invites?: bool, onboarding_completed?: bool} $data */
+        /** @var array{auto_confirm_bookings?: bool, customer_contact?: string, confirmation_mode?: string, reschedule_cutoff_hours?: int, calendar_invites?: bool, max_active_bookings_per_customer?: int, max_daily_bookings_per_customer?: int, pending_expiry_hours?: int, onboarding_completed?: bool} $data */
         $data = $this->validated();
 
         if (array_key_exists('onboarding_completed', $data)) {

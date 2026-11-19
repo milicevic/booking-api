@@ -43,4 +43,24 @@ interface BookingRepositoryInterface
      * @param  array<string, mixed>  $attributes
      */
     public function create(array $attributes): Booking;
+
+    /** Aktivne rezervacije kupca (isti telefon ili email) koje još nisu počele, u trenutnoj firmi. */
+    public function countActiveUpcomingForCustomer(?string $phone, ?string $email): int;
+
+    /** Rezervacije kupca (isti telefon ili email) napravljene posle $since, u trenutnoj firmi. */
+    public function countCreatedSinceForCustomer(?string $phone, ?string $email, \DateTimeInterface $since): int;
+
+    /**
+     * Aktivne rezervacije kupca koje još nisu počele (za otkazivanje pri blokiranju).
+     *
+     * @return Collection<int, Booking>
+     */
+    public function activeUpcomingForCustomer(?string $phone, ?string $email): Collection;
+
+    /**
+     * Rezervacije koje čekaju potvrdu, u svim firmama (komanda bookings:expire-pending), sa podešavanjima vlasnika.
+     *
+     * @return Collection<int, Booking>
+     */
+    public function pendingAcrossTenants(): Collection;
 }

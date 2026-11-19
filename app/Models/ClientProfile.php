@@ -22,6 +22,9 @@ use Illuminate\Support\Carbon;
  * @property ?CustomerContact $customer_contact
  * @property int $reschedule_cutoff_hours
  * @property bool $calendar_invites
+ * @property int $max_active_bookings_per_customer 0 = bez ograničenja
+ * @property int $max_daily_bookings_per_customer 0 = bez ograničenja
+ * @property int $pending_expiry_hours 0 = ističe tek kad termin počne
  * @property ?Carbon $onboarding_completed_at
  */
 class ClientProfile extends Model
@@ -43,6 +46,9 @@ class ClientProfile extends Model
         'onboarding_completed_at',
         'reschedule_cutoff_hours',
         'calendar_invites',
+        'max_active_bookings_per_customer',
+        'max_daily_bookings_per_customer',
+        'pending_expiry_hours',
     ];
 
     /**
@@ -57,6 +63,9 @@ class ClientProfile extends Model
             'onboarding_completed_at' => 'datetime',
             'reschedule_cutoff_hours' => 'integer',
             'calendar_invites' => 'boolean',
+            'max_active_bookings_per_customer' => 'integer',
+            'max_daily_bookings_per_customer' => 'integer',
+            'pending_expiry_hours' => 'integer',
         ];
     }
 

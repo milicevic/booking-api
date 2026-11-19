@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\BlockedCustomerRepositoryInterface;
 use App\Repositories\Contracts\BookingRepositoryInterface;
 use App\Repositories\Contracts\ClientRepositoryInterface;
 use App\Repositories\Contracts\NotificationRepositoryInterface;
@@ -11,6 +12,7 @@ use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\Repositories\Contracts\UserLookupRepositoryInterface;
 use App\Repositories\Contracts\WorkerRepositoryInterface;
 use App\Repositories\Contracts\WorkerScheduleRepositoryInterface;
+use App\Repositories\Eloquent\EloquentBlockedCustomerRepository;
 use App\Repositories\Eloquent\EloquentBookingRepository;
 use App\Repositories\Eloquent\EloquentClientRepository;
 use App\Repositories\Eloquent\EloquentNotificationRepository;
@@ -32,6 +34,7 @@ class RepositoryServiceProvider extends ServiceProvider
      */
     public array $singletons = [
         BookingRepositoryInterface::class => EloquentBookingRepository::class,
+        BlockedCustomerRepositoryInterface::class => EloquentBlockedCustomerRepository::class,
         WorkerScheduleRepositoryInterface::class => EloquentWorkerScheduleRepository::class,
         ClientRepositoryInterface::class => EloquentClientRepository::class,
         NotificationRepositoryInterface::class => EloquentNotificationRepository::class,

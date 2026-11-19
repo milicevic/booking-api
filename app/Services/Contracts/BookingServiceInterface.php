@@ -3,6 +3,7 @@
 namespace App\Services\Contracts;
 
 use App\Enums\BookingLinkAction;
+use App\Models\BlockedCustomer;
 use App\Models\Booking;
 use App\Models\Slot;
 use App\Models\User;
@@ -47,6 +48,20 @@ interface BookingServiceInterface
      * rescheduleCutoffHours() pre početka. Van režima "auto" rezervacija ponovo čeka potvrdu.
      */
     public function rescheduleByCustomer(string $token, int $slotId, string $startTime): Booking;
+
+    /**
+     * Vlasnik blokira kupca iz rezervacije (telefon i email): nove rezervacije se odbijaju, a sve njegove
+     * buduće aktivne rezervacije u firmi se otkazuju (kupac dobija mejl).
+     *
+     * @return array{blocked: BlockedCustomer, cancelled: int}
+     */
+    public function blockCustomer(Booking $booking, User $owner): array;
+
+    /**
+     * Odbija rezervacije koje čekaju potvrdu duže od pending_expiry_hours ili čiji je termin počeo,
+     * i oslobađa vreme (komanda bookings:expire-pending). Vraća broj odbijenih.
+     */
+    public function expirePending(): int;
 
     /** Potvrda ili odbijanje preko potpisanog linka iz mejla. */
     public function applyLinkAction(string $token, BookingLinkAction $action): Booking;

@@ -11,6 +11,7 @@ use App\Models\Booking;
 use App\Models\Service;
 use App\Models\Slot;
 use App\Models\User;
+use App\Repositories\Contracts\BlockedCustomerRepositoryInterface;
 use App\Repositories\Contracts\BookingRepositoryInterface;
 use App\Repositories\Contracts\ServiceRepositoryInterface;
 use App\Repositories\Contracts\SlotRepositoryInterface;
@@ -25,6 +26,13 @@ use Illuminate\Support\Facades\DB;
 
 class BookingService implements BookingServiceInterface
 {
+    /** Podrazumevani limiti kada firma nema profil (isti kao podrazumevane vrednosti kolona). */
+    private const DEFAULT_MAX_ACTIVE = 3;
+
+    private const DEFAULT_MAX_DAILY = 5;
+
+    private const DEFAULT_PENDING_EXPIRY_HOURS = 12;
+
     public function __construct(
         private readonly BookingRepositoryInterface $bookings,
         private readonly SlotRepositoryInterface $slots,
@@ -32,6 +40,7 @@ class BookingService implements BookingServiceInterface
         private readonly SlotAvailabilityServiceInterface $availability,
         private readonly BookingNotifierInterface $notifier,
         private readonly VisibleWorkersResolverInterface $visibleWorkers,
+        private readonly BlockedCustomerRepositoryInterface $blockedCustomers,
     ) {}
 
     public function listFor(User $user, ?int $clientId = null, array $filters = [], ?int $perPage = null): Collection|LengthAwarePaginator
@@ -46,6 +55,7 @@ class BookingService implements BookingServiceInterface
             $date = $slot->date->toDateString();
 
             $this->ensureContactAllowed($slot, $data);
+            $this->ensureCustomerAllowed($slot, $data);
 
             // Zaključavamo sve termine radnika tog dana, da dve istovremene rezervacije ne zauzmu isto vreme
             $this->slots->lockWorkerDay($slot->worker_id, $date);
@@ -229,6 +239,71 @@ class BookingService implements BookingServiceInterface
         if ($violation !== null) {
             throw DomainException::unprocessable(__($violation));
         }
+    }
+
+    /**
+     * Zaštita od zauzimanja termina: blokiran kupac ne može da zakaže, a ostali najviše
+     * max_active_bookings_per_customer budućih i max_daily_bookings_per_customer novih u 24 h (0 = bez ograničenja).
+     * Kupac se prepoznaje po telefonu ili emailu.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function ensureCustomerAllowed(Slot $slot, array $data): void
+    {
+        $phone = $data['customer_phone'] ?? null;
+        $email = $data['customer_email'] ?? null;
+        $profile = $slot->worker->client?->clientProfile;
+
+        // Ista poruka kao za zauzet termin ne bi bila istinita; blokiranom kupcu ne kažemo da je blokiran
+        if ($this->blockedCustomers->isBlocked($phone, $email)) {
+            throw DomainException::unprocessable(__('messages.booking_not_allowed'));
+        }
+
+        $maxActive = $profile->max_active_bookings_per_customer ?? self::DEFAULT_MAX_ACTIVE;
+        if ($maxActive > 0 && $this->bookings->countActiveUpcomingForCustomer($phone, $email) >= $maxActive) {
+            throw DomainException::unprocessable(__('messages.customer_limit_active', ['max' => $maxActive]));
+        }
+
+        $maxDaily = $profile->max_daily_bookings_per_customer ?? self::DEFAULT_MAX_DAILY;
+        if ($maxDaily > 0 && $this->bookings->countCreatedSinceForCustomer($phone, $email, now()->subDay()) >= $maxDaily) {
+            throw DomainException::unprocessable(__('messages.customer_limit_daily'));
+        }
+    }
+
+    public function blockCustomer(Booking $booking, User $owner): array
+    {
+        $blocked = $this->blockedCustomers->create([
+            'phone' => $booking->customer_phone,
+            'email' => $booking->customer_email ? mb_strtolower($booking->customer_email) : null,
+            'name' => $booking->customer_name,
+            'blocked_by' => $owner->id,
+        ]);
+
+        $cancelled = $this->bookings->activeUpcomingForCustomer($booking->customer_phone, $booking->customer_email);
+
+        foreach ($cancelled as $customerBooking) {
+            $this->changeStatusAndFreeTime($customerBooking, BookingStatus::Cancelled);
+            $this->notifier->cancelled($customerBooking);
+        }
+
+        return ['blocked' => $blocked, 'cancelled' => $cancelled->count()];
+    }
+
+    public function expirePending(): int
+    {
+        $expired = $this->bookings->pendingAcrossTenants()->filter(function (Booking $booking): bool {
+            $hours = $booking->slot->worker->client?->clientProfile->pending_expiry_hours ?? self::DEFAULT_PENDING_EXPIRY_HOURS;
+
+            return $booking->startsAt()->lte(now())
+                || ($hours > 0 && $booking->created_at->lte(now()->subHours($hours)));
+        });
+
+        foreach ($expired as $booking) {
+            $this->changeStatusAndFreeTime($booking, BookingStatus::Rejected);
+            $this->notifier->rejected($booking);
+        }
+
+        return $expired->count();
     }
 
     private function ensurePending(Booking $booking): void

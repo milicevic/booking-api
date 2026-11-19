@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\ExpirePendingBookings;
 use App\Console\Commands\ExpireTrialSubscriptions;
 use App\Console\Commands\ExtendWorkerSchedules;
 use Illuminate\Foundation\Inspiring;
@@ -17,3 +18,6 @@ Schedule::command(ExtendWorkerSchedules::class)->dailyAt('01:00');
 
 // Brisanje isteklih Sanctum tokena (rok važenja: sanctum.expiration)
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
+
+// Rezervacije koje čekaju potvrdu predugo (ili im je termin počeo) se odbijaju i oslobađaju termin
+Schedule::command(ExpirePendingBookings::class)->everyFifteenMinutes();

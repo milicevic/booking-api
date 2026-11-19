@@ -134,5 +134,10 @@ Pregled i otkazivanje po tokenu. Otkazati se može rezervacija koja čeka potvrd
   - stranica rezervacije nudi „Dodaj u kalendar“: na iPhone-u `.ics` (`GET /api/bookings/{token}/calendar.ics`), na Android-u i webu Google Calendar;
   - mejl otkazivanja i odbijanja ima `.ics` koji otkazuje isti događaj (isti UID, `METHOD:CANCEL`), pa ga Apple i Outlook uklanjaju; iz Google kalendara (dodatog linkom) događaj se briše ručno;
   - kupac dobija mejl o otkazivanju i kad sam otkaže na sajtu (ako je ostavio email).
+- **Zaštita od zauzimanja termina** (podešavanja vlasnika u `client_profiles`, 0 = bez ograničenja):
+  - kupac (isti telefon ili email, email bez obzira na velika slova) sme najviše `max_active_bookings_per_customer` (podrazumevano 3) budućih aktivnih rezervacija i `max_daily_bookings_per_customer` (5) novih u 24 sata, inače 422;
+  - sa iste IP adrese najviše 10 rezervacija u minuti i 30 na sat za istu firmu (limiter `bookings`);
+  - vlasnik može da blokira kupca iz rezervacije (`POST /api/bookings/{token}/block-customer`): telefon i email idu u `blocked_customers`, sve buduće aktivne rezervacije tog kupca se otkazuju (kupac dobija mejl), a nove se odbijaju porukom „Online rezervacija trenutno nije moguća“; lista i odblokiranje: `GET|DELETE /api/blocked-customers`;
+  - rezervacija koja čeka potvrdu duže od `pending_expiry_hours` (12) ili čiji je termin počeo se sama odbija i oslobađa termin (`bookings:expire-pending`, svakih 15 min); kupac dobija mejl kao pri odbijanju.
 - **„Vaše rezervacije“:** token se pamti u `localStorage` pregledača (`booking-fe/src/lib/myBookings.ts`) i prikazuje se na početnoj strani sajta firme. Iz pregledača se briše tek kad je rezervacija prošla, otkazana, odbijena ili je server ne prepoznaje (404). Na grešku mreže ostaje. Na drugom uređaju kupac koristi link iz mejla.
 - **Upravljanje:** kupac rezervaciju vidi i otkazuje na `/manage/{token}` (frontend) ili preko linka iz mejla.

@@ -40,6 +40,14 @@ class BookingPolicy
         return $allowed ? Response::allow() : Response::deny(__('messages.slot_not_accessible'));
     }
 
+    /** Blokira samo vlasnik firme (radnik ne). */
+    public function blockCustomer(User $user, Booking $booking): Response
+    {
+        return $this->isOwner($user, $booking)
+            ? Response::allow()
+            : Response::deny(__('messages.booking_not_accessible'));
+    }
+
     private function managesBooking(User $user, Booking $booking): Response
     {
         $isAssignedWorker = $user->role === UserRole::Worker

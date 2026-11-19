@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdminTenantController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BlockedCustomerController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\EmailVerificationController;
@@ -88,6 +89,9 @@ Route::middleware(['resolve.tenant:optional', 'check.subscription', 'auth:sanctu
     Route::patch('/bookings/{token}/confirm', [BookingController::class, 'confirm']);
     Route::patch('/bookings/{token}/reject', [BookingController::class, 'reject']);
     Route::patch('/bookings/{token}/reschedule', [BookingController::class, 'reschedule']);
+    Route::post('/bookings/{token}/block-customer', [BookingController::class, 'blockCustomer']);
+    Route::get('/blocked-customers', [BlockedCustomerController::class, 'index']);
+    Route::delete('/blocked-customers/{blockedCustomer}', [BlockedCustomerController::class, 'destroy']);
 
     Route::patch('/client/settings', [ClientController::class, 'updateSettings']);
     Route::post('/client/deploy-request', [ClientController::class, 'deployRequest']);
